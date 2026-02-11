@@ -205,3 +205,128 @@ func ParseWithLayout(s, layout string) (Date, error) {
 	// Wrap in quando.Date with default language
 	return Date{t: t, lang: EN}, nil
 }
+
+// ParseRelative parses relative date expressions and returns a Date.
+//
+// Supported expressions:
+//   - Keywords: "today", "tomorrow", "yesterday"
+//   - Relative offsets: "+N <unit>", "-N <unit>"
+//
+// Supported units (singular and plural):
+//   - day, days
+//   - week, weeks
+//   - month, months
+//   - quarter, quarters
+//   - year, years
+//
+// Examples:
+//
+//	ParseRelative("today")       // Today at 00:00:00
+//	ParseRelative("tomorrow")    // Tomorrow at 00:00:00
+//	ParseRelative("yesterday")   // Yesterday at 00:00:00
+//	ParseRelative("+2 days")     // Two days from today
+//	ParseRelative("-1 week")     // One week ago
+//	ParseRelative("+3 months")   // Three months from today
+//
+// All keywords and unit names are case-insensitive.
+// Results are always at 00:00:00 in the local timezone.
+//
+// Note: Complex expressions like "next monday" or "start of month" are not
+// yet supported. Use ParseRelative("+7 days") and StartOf(Months) instead.
+//
+// Returns an error wrapping ErrInvalidFormat if the expression cannot be parsed.
+func ParseRelative(s string) (Date, error) {
+	clock := NewClock()
+	return ParseRelativeWithClock(s, clock)
+}
+
+// ParseRelativeWithClock parses relative date expressions using a specific Clock.
+// This is the testable version of ParseRelative that accepts a Clock parameter.
+//
+// See ParseRelative for supported expressions and usage examples.
+func ParseRelativeWithClock(s string, clock Clock) (Date, error) {
+	// Trim whitespace and convert to lowercase for case-insensitive matching
+	s = strings.TrimSpace(s)
+	sLower := strings.ToLower(s)
+
+	// Empty input check
+	if s == "" {
+		return Date{}, fmt.Errorf("parsing relative date: empty input: %w", ErrInvalidFormat)
+	}
+
+	// Get base date (today at 00:00:00 in local timezone)
+	now := clock.Now()
+	t := now.Time()
+	loc := t.Location()
+	today := Date{
+		t:    time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc),
+		lang: EN,
+	}
+
+	// Handle simple keywords
+	switch sLower {
+	case "today":
+		return today, nil
+	case "tomorrow":
+		return today.Add(1, Days), nil
+	case "yesterday":
+		return today.Add(-1, Days), nil
+	}
+
+	// Handle relative offset pattern: "+N unit" or "-N unit"
+	// Examples: "+2 days", "-1 week", "+3 months"
+
+	// Split on whitespace
+	parts := strings.Fields(s)
+	if len(parts) != 2 {
+		return Date{}, fmt.Errorf("parsing relative date %q: invalid format (expected \"today\", \"tomorrow\", \"yesterday\", or \"+/-N unit\"): %w", s, ErrInvalidFormat)
+	}
+
+	offsetStr := parts[0]
+	unitStr := strings.ToLower(parts[1])
+
+	// Parse offset (must start with + or -)
+	if len(offsetStr) < 2 || (offsetStr[0] != '+' && offsetStr[0] != '-') {
+		return Date{}, fmt.Errorf("parsing relative date %q: offset must start with + or - (e.g., \"+2\" or \"-1\"): %w", s, ErrInvalidFormat)
+	}
+
+	// Check for invalid characters (like decimal points)
+	if strings.Contains(offsetStr, ".") {
+		return Date{}, fmt.Errorf("parsing relative date %q: offset must be an integer, not a float: %w", s, ErrInvalidFormat)
+	}
+
+	// Parse the number part
+	var offset int
+	_, err := fmt.Sscanf(offsetStr, "%d", &offset)
+	if err != nil {
+		return Date{}, fmt.Errorf("parsing relative date %q: invalid offset number %q: %w", s, offsetStr, ErrInvalidFormat)
+	}
+
+	// Map unit string to Unit constant
+	unit, err := parseUnitString(unitStr)
+	if err != nil {
+		return Date{}, fmt.Errorf("parsing relative date %q: %w", s, err)
+	}
+
+	// Apply the offset
+	return today.Add(offset, unit), nil
+}
+
+// parseUnitString maps unit name strings to Unit constants.
+// Supports both singular and plural forms, case-insensitive.
+func parseUnitString(s string) (Unit, error) {
+	switch s {
+	case "day", "days":
+		return Days, nil
+	case "week", "weeks":
+		return Weeks, nil
+	case "month", "months":
+		return Months, nil
+	case "quarter", "quarters":
+		return Quarters, nil
+	case "year", "years":
+		return Years, nil
+	default:
+		return 0, fmt.Errorf("unknown unit %q (supported: day, week, month, quarter, year): %w", s, ErrInvalidFormat)
+	}
+}

@@ -568,3 +568,64 @@ func ExampleParseWithLayout_error() {
 	}
 	// Output: Invalid date format detected
 }
+
+// ExampleParseRelative demonstrates parsing relative date expressions
+func ExampleParseRelative() {
+	// Simple keywords (results depend on current date)
+	today, _ := quando.ParseRelative("today")
+	tomorrow, _ := quando.ParseRelative("tomorrow")
+	yesterday, _ := quando.ParseRelative("yesterday")
+
+	fmt.Printf("Type: %T\n", today)
+	fmt.Printf("Type: %T\n", tomorrow)
+	fmt.Printf("Type: %T\n", yesterday)
+	// Output:
+	// Type: quando.Date
+	// Type: quando.Date
+	// Type: quando.Date
+}
+
+// ExampleParseRelative_offsets demonstrates relative offset expressions
+func ExampleParseRelative_offsets() {
+	// Note: Results depend on current date
+	// Using ParseRelativeWithClock for deterministic example
+
+	clock := quando.NewFixedClock(time.Date(2026, 2, 15, 0, 0, 0, 0, time.UTC))
+
+	twoDaysFromNow, _ := quando.ParseRelativeWithClock("+2 days", clock)
+	oneWeekAgo, _ := quando.ParseRelativeWithClock("-1 week", clock)
+	threeMonthsFromNow, _ := quando.ParseRelativeWithClock("+3 months", clock)
+
+	fmt.Println(twoDaysFromNow)
+	fmt.Println(oneWeekAgo)
+	fmt.Println(threeMonthsFromNow)
+	// Output:
+	// 2026-02-17 00:00:00
+	// 2026-02-08 00:00:00
+	// 2026-05-15 00:00:00
+}
+
+// ExampleParseRelative_caseInsensitive demonstrates case-insensitive parsing
+func ExampleParseRelative_caseInsensitive() {
+	clock := quando.NewFixedClock(time.Date(2026, 2, 15, 0, 0, 0, 0, time.UTC))
+
+	// All of these work
+	date1, _ := quando.ParseRelativeWithClock("today", clock)
+	date2, _ := quando.ParseRelativeWithClock("TODAY", clock)
+	date3, _ := quando.ParseRelativeWithClock("Today", clock)
+
+	fmt.Println(date1.Unix() == date2.Unix())
+	fmt.Println(date2.Unix() == date3.Unix())
+	// Output:
+	// true
+	// true
+}
+
+// ExampleParseRelative_error demonstrates error handling
+func ExampleParseRelative_error() {
+	_, err := quando.ParseRelative("next monday") // Not supported in Phase 1
+	if errors.Is(err, quando.ErrInvalidFormat) {
+		fmt.Println("Complex expressions not yet supported")
+	}
+	// Output: Complex expressions not yet supported
+}

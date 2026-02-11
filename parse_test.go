@@ -524,3 +524,334 @@ func TestParseWithLayoutImmutability(t *testing.T) {
 		t.Error("Add should return a new Date instance")
 	}
 }
+
+func TestParseRelativeWithClock(t *testing.T) {
+	// Fixed clock for deterministic testing
+	fixedTime := time.Date(2026, 2, 15, 14, 30, 45, 0, time.UTC) // Saturday, Feb 15, 2:30 PM
+	clock := NewFixedClock(fixedTime)
+
+	tests := []struct {
+		name          string
+		input         string
+		expectedYear  int
+		expectedMonth time.Month
+		expectedDay   int
+	}{
+		// Simple keywords
+		{
+			name:          "today",
+			input:         "today",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   15,
+		},
+		{
+			name:          "tomorrow",
+			input:         "tomorrow",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   16,
+		},
+		{
+			name:          "yesterday",
+			input:         "yesterday",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   14,
+		},
+
+		// Case-insensitive keywords
+		{
+			name:          "TODAY (uppercase)",
+			input:         "TODAY",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   15,
+		},
+		{
+			name:          "Tomorrow (mixed case)",
+			input:         "Tomorrow",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   16,
+		},
+
+		// Relative offsets - days
+		{
+			name:          "+1 day",
+			input:         "+1 day",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   16,
+		},
+		{
+			name:          "+2 days",
+			input:         "+2 days",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   17,
+		},
+		{
+			name:          "-1 day",
+			input:         "-1 day",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   14,
+		},
+		{
+			name:          "+7 days",
+			input:         "+7 days",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   22,
+		},
+
+		// Relative offsets - weeks
+		{
+			name:          "+1 week",
+			input:         "+1 week",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   22,
+		},
+		{
+			name:          "+2 weeks",
+			input:         "+2 weeks",
+			expectedYear:  2026,
+			expectedMonth: time.March,
+			expectedDay:   1,
+		},
+		{
+			name:          "-1 week",
+			input:         "-1 week",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   8,
+		},
+
+		// Relative offsets - months
+		{
+			name:          "+1 month",
+			input:         "+1 month",
+			expectedYear:  2026,
+			expectedMonth: time.March,
+			expectedDay:   15,
+		},
+		{
+			name:          "+3 months",
+			input:         "+3 months",
+			expectedYear:  2026,
+			expectedMonth: time.May,
+			expectedDay:   15,
+		},
+		{
+			name:          "-1 month",
+			input:         "-1 month",
+			expectedYear:  2026,
+			expectedMonth: time.January,
+			expectedDay:   15,
+		},
+
+		// Relative offsets - quarters
+		{
+			name:          "+1 quarter",
+			input:         "+1 quarter",
+			expectedYear:  2026,
+			expectedMonth: time.May,
+			expectedDay:   15,
+		},
+		{
+			name:          "-1 quarter",
+			input:         "-1 quarter",
+			expectedYear:  2025,
+			expectedMonth: time.November,
+			expectedDay:   15,
+		},
+
+		// Relative offsets - years
+		{
+			name:          "+1 year",
+			input:         "+1 year",
+			expectedYear:  2027,
+			expectedMonth: time.February,
+			expectedDay:   15,
+		},
+		{
+			name:          "-1 year",
+			input:         "-1 year",
+			expectedYear:  2025,
+			expectedMonth: time.February,
+			expectedDay:   15,
+		},
+
+		// Whitespace variations
+		{
+			name:          "leading whitespace",
+			input:         "  today",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   15,
+		},
+		{
+			name:          "trailing whitespace",
+			input:         "+2 days  ",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   17,
+		},
+		{
+			name:          "extra spaces between parts",
+			input:         "+2   days",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   17,
+		},
+
+		// Case-insensitive units
+		{
+			name:          "+2 DAYS (uppercase)",
+			input:         "+2 DAYS",
+			expectedYear:  2026,
+			expectedMonth: time.February,
+			expectedDay:   17,
+		},
+		{
+			name:          "+1 Month (mixed case)",
+			input:         "+1 Month",
+			expectedYear:  2026,
+			expectedMonth: time.March,
+			expectedDay:   15,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			date, err := ParseRelativeWithClock(tt.input, clock)
+			if err != nil {
+				t.Fatalf("ParseRelativeWithClock(%q) unexpected error: %v", tt.input, err)
+			}
+
+			tm := date.Time()
+			if tm.Year() != tt.expectedYear {
+				t.Errorf("Year = %d, want %d", tm.Year(), tt.expectedYear)
+			}
+			if tm.Month() != tt.expectedMonth {
+				t.Errorf("Month = %v, want %v", tm.Month(), tt.expectedMonth)
+			}
+			if tm.Day() != tt.expectedDay {
+				t.Errorf("Day = %d, want %d", tm.Day(), tt.expectedDay)
+			}
+
+			// Verify time is 00:00:00 (StartOf(Days) behavior)
+			if tm.Hour() != 0 || tm.Minute() != 0 || tm.Second() != 0 {
+				t.Errorf("Time should be 00:00:00, got %02d:%02d:%02d", tm.Hour(), tm.Minute(), tm.Second())
+			}
+
+			// Verify default language is set
+			if date.lang != EN {
+				t.Errorf("lang = %v, want EN", date.lang)
+			}
+		})
+	}
+}
+
+func TestParseRelativeErrors(t *testing.T) {
+	clock := NewFixedClock(time.Date(2026, 2, 15, 12, 0, 0, 0, time.UTC))
+
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"empty string", ""},
+		{"whitespace only", "   "},
+		{"unknown keyword", "now"},
+		{"unknown keyword 2", "currently"},
+		{"invalid format - no sign", "2 days"},
+		{"invalid format - wrong parts", "+2"},
+		{"invalid format - too many parts", "+2 days ago"},
+		{"invalid offset - not a number", "+abc days"},
+		{"invalid offset - float", "+1.5 days"},
+		{"invalid unit", "+2 fortnights"},
+		{"invalid unit 2", "+1 decade"},
+		{"invalid unit 3", "+3 hours"}, // hours not supported in Phase 1
+		{"sign without number", "+ days"},
+		{"number without unit", "+2"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ParseRelativeWithClock(tt.input, clock)
+			if err == nil {
+				t.Errorf("ParseRelativeWithClock(%q) expected error, got nil", tt.input)
+			}
+
+			// Verify error wraps ErrInvalidFormat
+			if !errors.Is(err, ErrInvalidFormat) {
+				t.Errorf("error should wrap ErrInvalidFormat, got: %v", err)
+			}
+		})
+	}
+}
+
+func TestParseRelative(t *testing.T) {
+	// Test the production function (uses system clock)
+	// Just verify it doesn't error on valid inputs
+	validInputs := []string{
+		"today",
+		"tomorrow",
+		"yesterday",
+		"+1 day",
+		"-2 weeks",
+		"+3 months",
+	}
+
+	for _, input := range validInputs {
+		t.Run(input, func(t *testing.T) {
+			_, err := ParseRelative(input)
+			if err != nil {
+				t.Errorf("ParseRelative(%q) unexpected error: %v", input, err)
+			}
+		})
+	}
+}
+
+func TestParseRelativeImmutability(t *testing.T) {
+	clock := NewFixedClock(time.Date(2026, 2, 15, 12, 0, 0, 0, time.UTC))
+
+	// Parse the same expression twice
+	date1, err1 := ParseRelativeWithClock("tomorrow", clock)
+	date2, err2 := ParseRelativeWithClock("tomorrow", clock)
+
+	if err1 != nil || err2 != nil {
+		t.Fatalf("ParseRelativeWithClock failed: %v, %v", err1, err2)
+	}
+
+	// Modify date1
+	modified := date1.Add(5, Days)
+
+	// Verify date2 is unchanged
+	if date2.Unix() != date1.Unix() {
+		t.Error("date2 should not be affected by operations on date1")
+	}
+	if modified.Unix() == date1.Unix() {
+		t.Error("Add should return a new Date instance")
+	}
+}
+
+func BenchmarkParseRelativeKeyword(b *testing.B) {
+	clock := NewFixedClock(time.Date(2026, 2, 15, 12, 0, 0, 0, time.UTC))
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = ParseRelativeWithClock("today", clock)
+	}
+}
+
+func BenchmarkParseRelativeOffset(b *testing.B) {
+	clock := NewFixedClock(time.Date(2026, 2, 15, 12, 0, 0, 0, time.UTC))
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = ParseRelativeWithClock("+2 days", clock)
+	}
+}
