@@ -365,3 +365,48 @@ func ExampleDate_Add_chaining() {
 	fmt.Println(result)
 	// Output: 2026-02-16 10:00:00
 }
+
+// ExampleParse demonstrates basic date parsing with automatic format detection
+func ExampleParse() {
+	date, err := quando.Parse("2026-02-09")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	fmt.Println(date)
+	// Output: 2026-02-09 00:00:00
+}
+
+// ExampleParse_formats demonstrates parsing various supported date formats
+func ExampleParse_formats() {
+	formats := []string{
+		"2026-02-09",  // ISO format (YYYY-MM-DD)
+		"2026/02/09",  // ISO with slash (YYYY/MM/DD)
+		"09.02.2026",  // EU format (DD.MM.YYYY)
+	}
+
+	for _, f := range formats {
+		date, err := quando.Parse(f)
+		if err != nil {
+			fmt.Printf("Error parsing %s: %v\n", f, err)
+			continue
+		}
+		fmt.Println(date)
+	}
+	// Output:
+	// 2026-02-09 00:00:00
+	// 2026-02-09 00:00:00
+	// 2026-02-09 00:00:00
+}
+
+// ExampleParse_error demonstrates error handling for ambiguous formats
+func ExampleParse_error() {
+	// Slash format without year prefix is ambiguous
+	// (could be US: MM/DD/YYYY or EU: DD/MM/YYYY)
+	_, err := quando.Parse("01/02/2026")
+
+	if errors.Is(err, quando.ErrInvalidFormat) {
+		fmt.Println("Ambiguous format detected")
+	}
+	// Output: Ambiguous format detected
+}
