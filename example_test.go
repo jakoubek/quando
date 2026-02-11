@@ -147,3 +147,47 @@ func ExampleUnit_String() {
 	fmt.Printf("Unit: %s\n", unit)
 	// Output: Unit: days
 }
+
+// ExampleDate_StartOf demonstrates snapping to the beginning of time units
+func ExampleDate_StartOf() {
+	date := quando.From(time.Date(2026, 2, 15, 15, 30, 45, 0, time.UTC)) // Sunday, Feb 15
+
+	fmt.Println("Original:", date)
+	fmt.Println("StartOf(Week):", date.StartOf(quando.Weeks))       // Monday
+	fmt.Println("StartOf(Month):", date.StartOf(quando.Months))     // Feb 1
+	fmt.Println("StartOf(Quarter):", date.StartOf(quando.Quarters)) // Jan 1 (Q1)
+	fmt.Println("StartOf(Year):", date.StartOf(quando.Years))       // Jan 1
+	// Output:
+	// Original: 2026-02-15 15:30:45
+	// StartOf(Week): 2026-02-09 00:00:00
+	// StartOf(Month): 2026-02-01 00:00:00
+	// StartOf(Quarter): 2026-01-01 00:00:00
+	// StartOf(Year): 2026-01-01 00:00:00
+}
+
+// ExampleDate_EndOf demonstrates snapping to the end of time units
+func ExampleDate_EndOf() {
+	date := quando.From(time.Date(2026, 2, 9, 15, 30, 45, 0, time.UTC)) // Monday, Feb 9
+
+	fmt.Println("Original:", date)
+	fmt.Println("EndOf(Week):", date.EndOf(quando.Weeks))       // Sunday
+	fmt.Println("EndOf(Month):", date.EndOf(quando.Months))     // Feb 28
+	fmt.Println("EndOf(Quarter):", date.EndOf(quando.Quarters)) // Mar 31 (Q1)
+	fmt.Println("EndOf(Year):", date.EndOf(quando.Years))       // Dec 31
+	// Output:
+	// Original: 2026-02-09 15:30:45
+	// EndOf(Week): 2026-02-15 23:59:59
+	// EndOf(Month): 2026-02-28 23:59:59
+	// EndOf(Quarter): 2026-03-31 23:59:59
+	// EndOf(Year): 2026-12-31 23:59:59
+}
+
+// ExampleDate_StartOf_chaining demonstrates chaining snap operations
+func ExampleDate_StartOf_chaining() {
+	// Get the first Monday of the current quarter
+	date := quando.Now()
+	firstMondayOfQuarter := date.StartOf(quando.Quarters).StartOf(quando.Weeks)
+
+	fmt.Printf("Type: %T\n", firstMondayOfQuarter)
+	// Output: Type: quando.Date
+}
