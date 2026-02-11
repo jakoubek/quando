@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"code.beautifulmachines.dev/quando"
+	"code.beautifulmachines.dev/jakoubek/quando"
 )
 
 func ExampleNow() {
