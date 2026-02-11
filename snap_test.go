@@ -536,3 +536,282 @@ func BenchmarkEndOfYear(b *testing.B) {
 		_ = date.EndOf(Years)
 	}
 }
+
+// TestNext tests the Next() method for all weekdays
+func TestNext(t *testing.T) {
+	tests := []struct {
+		name        string
+		date        Date
+		targetDay   time.Weekday
+		expectedDay time.Weekday
+		daysLater   int
+	}{
+		// Monday as starting point
+		{
+			name:        "Monday -> next Monday (same day, 7 days later)",
+			date:        From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC)), // Monday
+			targetDay:   time.Monday,
+			expectedDay: time.Monday,
+			daysLater:   7,
+		},
+		{
+			name:        "Monday -> next Tuesday",
+			date:        From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC)), // Monday
+			targetDay:   time.Tuesday,
+			expectedDay: time.Tuesday,
+			daysLater:   1,
+		},
+		{
+			name:        "Monday -> next Friday",
+			date:        From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC)), // Monday
+			targetDay:   time.Friday,
+			expectedDay: time.Friday,
+			daysLater:   4,
+		},
+		{
+			name:        "Monday -> next Sunday",
+			date:        From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC)), // Monday
+			targetDay:   time.Sunday,
+			expectedDay: time.Sunday,
+			daysLater:   6,
+		},
+		// Friday as starting point
+		{
+			name:        "Friday -> next Friday (same day, 7 days later)",
+			date:        From(time.Date(2026, 2, 13, 15, 30, 0, 0, time.UTC)), // Friday
+			targetDay:   time.Friday,
+			expectedDay: time.Friday,
+			daysLater:   7,
+		},
+		{
+			name:        "Friday -> next Monday",
+			date:        From(time.Date(2026, 2, 13, 15, 30, 0, 0, time.UTC)), // Friday
+			targetDay:   time.Monday,
+			expectedDay: time.Monday,
+			daysLater:   3,
+		},
+		{
+			name:        "Friday -> next Thursday",
+			date:        From(time.Date(2026, 2, 13, 15, 30, 0, 0, time.UTC)), // Friday
+			targetDay:   time.Thursday,
+			expectedDay: time.Thursday,
+			daysLater:   6,
+		},
+		// Sunday as starting point
+		{
+			name:        "Sunday -> next Sunday (same day, 7 days later)",
+			date:        From(time.Date(2026, 2, 15, 15, 30, 0, 0, time.UTC)), // Sunday
+			targetDay:   time.Sunday,
+			expectedDay: time.Sunday,
+			daysLater:   7,
+		},
+		{
+			name:        "Sunday -> next Monday",
+			date:        From(time.Date(2026, 2, 15, 15, 30, 0, 0, time.UTC)), // Sunday
+			targetDay:   time.Monday,
+			expectedDay: time.Monday,
+			daysLater:   1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.date.Next(tt.targetDay)
+
+			// Verify correct weekday
+			if result.Time().Weekday() != tt.expectedDay {
+				t.Errorf("Next(%v) weekday = %v, want %v", tt.targetDay, result.Time().Weekday(), tt.expectedDay)
+			}
+
+			// Verify it's in the future
+			if !result.Time().After(tt.date.Time()) {
+				t.Errorf("Next(%v) = %v, should be after %v", tt.targetDay, result, tt.date)
+			}
+
+			// Verify correct number of days
+			daysDiff := int(result.Time().Sub(tt.date.Time()).Hours() / 24)
+			if daysDiff != tt.daysLater {
+				t.Errorf("Next(%v) is %d days later, want %d", tt.targetDay, daysDiff, tt.daysLater)
+			}
+
+			// Verify time of day is preserved
+			if result.Time().Hour() != tt.date.Time().Hour() ||
+				result.Time().Minute() != tt.date.Time().Minute() {
+				t.Errorf("Next(%v) time = %02d:%02d, want %02d:%02d",
+					tt.targetDay,
+					result.Time().Hour(), result.Time().Minute(),
+					tt.date.Time().Hour(), tt.date.Time().Minute())
+			}
+		})
+	}
+}
+
+// TestPrev tests the Prev() method for all weekdays
+func TestPrev(t *testing.T) {
+	tests := []struct {
+		name        string
+		date        Date
+		targetDay   time.Weekday
+		expectedDay time.Weekday
+		daysEarlier int
+	}{
+		// Monday as starting point
+		{
+			name:        "Monday -> prev Monday (same day, 7 days earlier)",
+			date:        From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC)), // Monday
+			targetDay:   time.Monday,
+			expectedDay: time.Monday,
+			daysEarlier: 7,
+		},
+		{
+			name:        "Monday -> prev Friday",
+			date:        From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC)), // Monday
+			targetDay:   time.Friday,
+			expectedDay: time.Friday,
+			daysEarlier: 3,
+		},
+		{
+			name:        "Monday -> prev Sunday",
+			date:        From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC)), // Monday
+			targetDay:   time.Sunday,
+			expectedDay: time.Sunday,
+			daysEarlier: 1,
+		},
+		{
+			name:        "Monday -> prev Tuesday",
+			date:        From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC)), // Monday
+			targetDay:   time.Tuesday,
+			expectedDay: time.Tuesday,
+			daysEarlier: 6,
+		},
+		// Friday as starting point
+		{
+			name:        "Friday -> prev Friday (same day, 7 days earlier)",
+			date:        From(time.Date(2026, 2, 13, 15, 30, 0, 0, time.UTC)), // Friday
+			targetDay:   time.Friday,
+			expectedDay: time.Friday,
+			daysEarlier: 7,
+		},
+		{
+			name:        "Friday -> prev Monday",
+			date:        From(time.Date(2026, 2, 13, 15, 30, 0, 0, time.UTC)), // Friday
+			targetDay:   time.Monday,
+			expectedDay: time.Monday,
+			daysEarlier: 4,
+		},
+		{
+			name:        "Friday -> prev Thursday",
+			date:        From(time.Date(2026, 2, 13, 15, 30, 0, 0, time.UTC)), // Friday
+			targetDay:   time.Thursday,
+			expectedDay: time.Thursday,
+			daysEarlier: 1,
+		},
+		// Sunday as starting point
+		{
+			name:        "Sunday -> prev Sunday (same day, 7 days earlier)",
+			date:        From(time.Date(2026, 2, 15, 15, 30, 0, 0, time.UTC)), // Sunday
+			targetDay:   time.Sunday,
+			expectedDay: time.Sunday,
+			daysEarlier: 7,
+		},
+		{
+			name:        "Sunday -> prev Saturday",
+			date:        From(time.Date(2026, 2, 15, 15, 30, 0, 0, time.UTC)), // Sunday
+			targetDay:   time.Saturday,
+			expectedDay: time.Saturday,
+			daysEarlier: 1,
+		},
+		{
+			name:        "Sunday -> prev Monday",
+			date:        From(time.Date(2026, 2, 15, 15, 30, 0, 0, time.UTC)), // Sunday
+			targetDay:   time.Monday,
+			expectedDay: time.Monday,
+			daysEarlier: 6,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.date.Prev(tt.targetDay)
+
+			// Verify correct weekday
+			if result.Time().Weekday() != tt.expectedDay {
+				t.Errorf("Prev(%v) weekday = %v, want %v", tt.targetDay, result.Time().Weekday(), tt.expectedDay)
+			}
+
+			// Verify it's in the past
+			if !result.Time().Before(tt.date.Time()) {
+				t.Errorf("Prev(%v) = %v, should be before %v", tt.targetDay, result, tt.date)
+			}
+
+			// Verify correct number of days
+			daysDiff := int(tt.date.Time().Sub(result.Time()).Hours() / 24)
+			if daysDiff != tt.daysEarlier {
+				t.Errorf("Prev(%v) is %d days earlier, want %d", tt.targetDay, daysDiff, tt.daysEarlier)
+			}
+
+			// Verify time of day is preserved
+			if result.Time().Hour() != tt.date.Time().Hour() ||
+				result.Time().Minute() != tt.date.Time().Minute() {
+				t.Errorf("Prev(%v) time = %02d:%02d, want %02d:%02d",
+					tt.targetDay,
+					result.Time().Hour(), result.Time().Minute(),
+					tt.date.Time().Hour(), tt.date.Time().Minute())
+			}
+		})
+	}
+}
+
+// TestNextPrevImmutability verifies that Next and Prev don't modify the original date
+func TestNextPrevImmutability(t *testing.T) {
+	original := From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC))
+	originalTime := original.Time()
+
+	_ = original.Next(time.Friday)
+	_ = original.Prev(time.Friday)
+	_ = original.Next(time.Monday)
+	_ = original.Prev(time.Monday)
+
+	if !original.Time().Equal(originalTime) {
+		t.Error("Next/Prev operations modified the original date")
+	}
+}
+
+// TestNextPrevTimezones verifies that Next and Prev preserve timezone
+func TestNextPrevTimezones(t *testing.T) {
+	loc, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		t.Skipf("Skipping timezone test: %v", err)
+	}
+
+	berlinTime := time.Date(2026, 2, 9, 15, 30, 0, 0, loc)
+	date := From(berlinTime)
+
+	nextFriday := date.Next(time.Friday)
+	prevFriday := date.Prev(time.Friday)
+
+	if nextFriday.Time().Location() != loc {
+		t.Errorf("Next() location = %v, want %v", nextFriday.Time().Location(), loc)
+	}
+	if prevFriday.Time().Location() != loc {
+		t.Errorf("Prev() location = %v, want %v", prevFriday.Time().Location(), loc)
+	}
+}
+
+// BenchmarkNext benchmarks the Next() method
+func BenchmarkNext(b *testing.B) {
+	date := Now()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = date.Next(time.Friday)
+	}
+}
+
+// BenchmarkPrev benchmarks the Prev() method
+func BenchmarkPrev(b *testing.B) {
+	date := Now()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = date.Prev(time.Friday)
+	}
+}

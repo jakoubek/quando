@@ -141,3 +141,57 @@ func (d Date) EndOf(unit Unit) Date {
 		return d
 	}
 }
+
+// Next returns a new Date representing the next occurrence of the specified weekday.
+// The time of day is preserved from the source date.
+//
+// IMPORTANT: Next ALWAYS returns a future date, never today. If today is the
+// specified weekday, Next returns the same weekday next week (7 days later).
+//
+// Example:
+//
+//	// On Monday, Feb 9, 2026
+//	date := quando.From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC)) // Monday
+//	nextMonday := date.Next(time.Monday)    // Feb 16, 2026 15:30 (next Monday)
+//	nextFriday := date.Next(time.Friday)    // Feb 13, 2026 15:30 (this Friday)
+func (d Date) Next(weekday time.Weekday) Date {
+	t := d.t
+	currentWeekday := t.Weekday()
+
+	// Calculate days until target weekday
+	daysUntil := int(weekday - currentWeekday)
+	if daysUntil <= 0 {
+		// If target is today or in the past this week, jump to next week
+		daysUntil += 7
+	}
+
+	result := t.AddDate(0, 0, daysUntil)
+	return Date{t: result, lang: d.lang}
+}
+
+// Prev returns a new Date representing the previous occurrence of the specified weekday.
+// The time of day is preserved from the source date.
+//
+// IMPORTANT: Prev ALWAYS returns a past date, never today. If today is the
+// specified weekday, Prev returns the same weekday last week (7 days earlier).
+//
+// Example:
+//
+//	// On Monday, Feb 9, 2026
+//	date := quando.From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC)) // Monday
+//	prevMonday := date.Prev(time.Monday)    // Feb 2, 2026 15:30 (last Monday)
+//	prevFriday := date.Prev(time.Friday)    // Feb 6, 2026 15:30 (last Friday)
+func (d Date) Prev(weekday time.Weekday) Date {
+	t := d.t
+	currentWeekday := t.Weekday()
+
+	// Calculate days until target weekday (going backwards)
+	daysUntil := int(currentWeekday - weekday)
+	if daysUntil <= 0 {
+		// If target is today or in the future this week, jump to previous week
+		daysUntil += 7
+	}
+
+	result := t.AddDate(0, 0, -daysUntil)
+	return Date{t: result, lang: d.lang}
+}

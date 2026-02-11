@@ -191,3 +191,41 @@ func ExampleDate_StartOf_chaining() {
 	fmt.Printf("Type: %T\n", firstMondayOfQuarter)
 	// Output: Type: quando.Date
 }
+
+// ExampleDate_Next demonstrates finding the next occurrence of a weekday
+func ExampleDate_Next() {
+	// On Monday, Feb 9, 2026
+	date := quando.From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC))
+
+	fmt.Println("Today:", date.Time().Weekday())
+	fmt.Println("Next Monday:", date.Next(time.Monday).Time().Weekday(), "-", date.Next(time.Monday))
+	fmt.Println("Next Friday:", date.Next(time.Friday).Time().Weekday(), "-", date.Next(time.Friday))
+	// Output:
+	// Today: Monday
+	// Next Monday: Monday - 2026-02-16 15:30:00
+	// Next Friday: Friday - 2026-02-13 15:30:00
+}
+
+// ExampleDate_Prev demonstrates finding the previous occurrence of a weekday
+func ExampleDate_Prev() {
+	// On Monday, Feb 9, 2026
+	date := quando.From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC))
+
+	fmt.Println("Today:", date.Time().Weekday())
+	fmt.Println("Prev Monday:", date.Prev(time.Monday).Time().Weekday(), "-", date.Prev(time.Monday))
+	fmt.Println("Prev Friday:", date.Prev(time.Friday).Time().Weekday(), "-", date.Prev(time.Friday))
+	// Output:
+	// Today: Monday
+	// Prev Monday: Monday - 2026-02-02 15:30:00
+	// Prev Friday: Friday - 2026-02-06 15:30:00
+}
+
+// ExampleDate_Next_sameWeekday demonstrates the same-weekday edge case
+func ExampleDate_Next_sameWeekday() {
+	// Next ALWAYS returns future, never today (even if same weekday)
+	monday := quando.From(time.Date(2026, 2, 9, 15, 30, 0, 0, time.UTC)) // Monday
+
+	nextMonday := monday.Next(time.Monday)
+	fmt.Printf("Days later: %d\n", int(nextMonday.Time().Sub(monday.Time()).Hours()/24))
+	// Output: Days later: 7
+}
