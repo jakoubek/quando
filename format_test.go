@@ -229,54 +229,6 @@ func TestFormat_Immutability(t *testing.T) {
 	}
 }
 
-// Benchmarks
-func BenchmarkFormat_ISO(b *testing.B) {
-	date := From(time.Date(2026, 2, 9, 12, 30, 45, 0, time.UTC))
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Format(ISO)
-	}
-}
-
-func BenchmarkFormat_EU(b *testing.B) {
-	date := From(time.Date(2026, 2, 9, 12, 30, 45, 0, time.UTC))
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Format(EU)
-	}
-}
-
-func BenchmarkFormat_US(b *testing.B) {
-	date := From(time.Date(2026, 2, 9, 12, 30, 45, 0, time.UTC))
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Format(US)
-	}
-}
-
-func BenchmarkFormat_Long_EN(b *testing.B) {
-	date := From(time.Date(2026, 2, 9, 12, 30, 45, 0, time.UTC)).WithLang(EN)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Format(Long)
-	}
-}
-
-func BenchmarkFormat_Long_DE(b *testing.B) {
-	date := From(time.Date(2026, 2, 9, 12, 30, 45, 0, time.UTC)).WithLang(DE)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Format(Long)
-	}
-}
-
-func BenchmarkFormat_RFC2822(b *testing.B) {
-	date := From(time.Date(2026, 2, 9, 12, 30, 45, 0, time.UTC))
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Format(RFC2822)
-	}
-}
 
 // TestFormatLayout tests basic FormatLayout functionality
 func TestFormatLayout(t *testing.T) {
@@ -495,39 +447,49 @@ func TestFormatLayout_Immutability(t *testing.T) {
 	}
 }
 
-// Benchmarks for FormatLayout
-func BenchmarkFormatLayout_EN_Simple(b *testing.B) {
-	date := From(time.Date(2026, 2, 9, 14, 30, 45, 0, time.UTC)).WithLang(EN)
-	layout := "Monday, January 2, 2006"
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.FormatLayout(layout)
+// TestFormat_UnknownFormatType tests Format() with an unknown format type
+func TestFormat_UnknownFormatType(t *testing.T) {
+	date := From(time.Date(2026, 2, 9, 12, 30, 45, 0, time.UTC))
+
+	// Cast an invalid int to Format type to test fallback
+	unknownFormat := Format(999)
+
+	result := date.Format(unknownFormat)
+
+	// Should fallback to ISO format (documented behavior)
+	expected := "2026-02-09"
+	if result != expected {
+		t.Errorf("Format(unknown) = %q, want %q (ISO fallback)", result, expected)
 	}
 }
 
-func BenchmarkFormatLayout_EN_Numeric(b *testing.B) {
-	date := From(time.Date(2026, 2, 9, 14, 30, 45, 0, time.UTC)).WithLang(EN)
-	layout := "2006-01-02 15:04:05"
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.FormatLayout(layout)
+// TestFormatLong_EmptyLang tests formatLong() with empty lang
+func TestFormatLong_EmptyLang(t *testing.T) {
+	// Create date with empty lang (should default to EN)
+	date := Date{
+		t:    time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC),
+		lang: "", // Empty lang
+	}
+
+	result := date.formatLong()
+
+	// Should default to English format
+	expected := "February 9, 2026"
+	if result != expected {
+		t.Errorf("formatLong() with empty lang = %q, want %q", result, expected)
 	}
 }
 
-func BenchmarkFormatLayout_DE_Simple(b *testing.B) {
-	date := From(time.Date(2026, 2, 9, 14, 30, 45, 0, time.UTC)).WithLang(DE)
-	layout := "Monday, January 2, 2006"
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.FormatLayout(layout)
+// TestFormatString_Unknown tests String() for Format type with unknown value
+func TestFormatString_Unknown(t *testing.T) {
+	// Create an unknown format value
+	unknownFormat := Format(999)
+
+	result := unknownFormat.String()
+
+	// Should return "unknown" or similar
+	if result == "" {
+		t.Error("Format.String() for unknown format should not be empty")
 	}
 }
 
-func BenchmarkFormatLayout_DE_Complex(b *testing.B) {
-	date := From(time.Date(2026, 2, 9, 14, 30, 45, 0, time.UTC)).WithLang(DE)
-	layout := "Monday, January 2, 2006 at 15:04:05 MST (Mon, Jan)"
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.FormatLayout(layout)
-	}
-}

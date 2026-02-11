@@ -269,46 +269,6 @@ func TestDateTimezones(t *testing.T) {
 	}
 }
 
-// BenchmarkNow benchmarks the Now() function
-func BenchmarkNow(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = Now()
-	}
-}
-
-// BenchmarkFrom benchmarks the From() function
-func BenchmarkFrom(b *testing.B) {
-	t := time.Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = From(t)
-	}
-}
-
-// BenchmarkFromUnix benchmarks the FromUnix() function
-func BenchmarkFromUnix(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = FromUnix(1707480000)
-	}
-}
-
-// BenchmarkTime benchmarks the Time() method
-func BenchmarkTime(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Time()
-	}
-}
-
-// BenchmarkUnix benchmarks the Unix() method
-func BenchmarkUnix(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Unix()
-	}
-}
 
 func TestIn(t *testing.T) {
 	tests := []struct {

@@ -465,77 +465,6 @@ func TestSnapTimezones(t *testing.T) {
 	}
 }
 
-// BenchmarkStartOfWeek benchmarks StartOf(Weeks)
-func BenchmarkStartOfWeek(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.StartOf(Weeks)
-	}
-}
-
-// BenchmarkEndOfWeek benchmarks EndOf(Weeks)
-func BenchmarkEndOfWeek(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.EndOf(Weeks)
-	}
-}
-
-// BenchmarkStartOfMonth benchmarks StartOf(Months)
-func BenchmarkStartOfMonth(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.StartOf(Months)
-	}
-}
-
-// BenchmarkEndOfMonth benchmarks EndOf(Months)
-func BenchmarkEndOfMonth(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.EndOf(Months)
-	}
-}
-
-// BenchmarkStartOfQuarter benchmarks StartOf(Quarters)
-func BenchmarkStartOfQuarter(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.StartOf(Quarters)
-	}
-}
-
-// BenchmarkEndOfQuarter benchmarks EndOf(Quarters)
-func BenchmarkEndOfQuarter(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.EndOf(Quarters)
-	}
-}
-
-// BenchmarkStartOfYear benchmarks StartOf(Years)
-func BenchmarkStartOfYear(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.StartOf(Years)
-	}
-}
-
-// BenchmarkEndOfYear benchmarks EndOf(Years)
-func BenchmarkEndOfYear(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.EndOf(Years)
-	}
-}
 
 // TestNext tests the Next() method for all weekdays
 func TestNext(t *testing.T) {
@@ -798,20 +727,29 @@ func TestNextPrevTimezones(t *testing.T) {
 	}
 }
 
-// BenchmarkNext benchmarks the Next() method
-func BenchmarkNext(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Next(time.Friday)
+// TestStartOf_UnsupportedUnit tests StartOf() with unsupported unit
+func TestStartOf_UnsupportedUnit(t *testing.T) {
+	date := From(time.Date(2026, 2, 15, 14, 30, 45, 0, time.UTC))
+
+	// Seconds is not supported by StartOf
+	result := date.StartOf(Seconds)
+
+	// Should return unchanged date
+	if !result.Time().Equal(date.Time()) {
+		t.Errorf("StartOf(Seconds) should return unchanged date")
 	}
 }
 
-// BenchmarkPrev benchmarks the Prev() method
-func BenchmarkPrev(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Prev(time.Friday)
+// TestEndOf_UnsupportedUnit tests EndOf() with unsupported unit
+func TestEndOf_UnsupportedUnit(t *testing.T) {
+	date := From(time.Date(2026, 2, 15, 14, 30, 45, 0, time.UTC))
+
+	// Seconds is not supported by EndOf
+	result := date.EndOf(Seconds)
+
+	// Should return unchanged date
+	if !result.Time().Equal(date.Time()) {
+		t.Errorf("EndOf(Seconds) should return unchanged date")
 	}
 }
+

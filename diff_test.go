@@ -495,49 +495,6 @@ func TestDurationCrossBoundaries(t *testing.T) {
 	}
 }
 
-// BenchmarkDurationSeconds benchmarks Seconds()
-func BenchmarkDurationSeconds(b *testing.B) {
-	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	end := time.Date(2026, 12, 31, 0, 0, 0, 0, time.UTC)
-	dur := Diff(start, end)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = dur.Seconds()
-	}
-}
-
-// BenchmarkDurationDays benchmarks Days()
-func BenchmarkDurationDays(b *testing.B) {
-	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	end := time.Date(2026, 12, 31, 0, 0, 0, 0, time.UTC)
-	dur := Diff(start, end)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = dur.Days()
-	}
-}
-
-// BenchmarkDurationMonths benchmarks Months()
-func BenchmarkDurationMonths(b *testing.B) {
-	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	end := time.Date(2026, 12, 31, 0, 0, 0, 0, time.UTC)
-	dur := Diff(start, end)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = dur.Months()
-	}
-}
-
-// BenchmarkDurationMonthsFloat benchmarks MonthsFloat()
-func BenchmarkDurationMonthsFloat(b *testing.B) {
-	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	end := time.Date(2026, 12, 31, 0, 0, 0, 0, time.UTC)
-	dur := Diff(start, end)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = dur.MonthsFloat()
-	}
-}
 
 // TestFloatPrecision verifies that float methods provide better precision
 func TestFloatPrecision(t *testing.T) {
@@ -735,24 +692,3 @@ func TestDurationHumanAdaptiveGranularity(t *testing.T) {
 	}
 }
 
-func BenchmarkDurationHuman(b *testing.B) {
-	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	end := time.Date(2026, 11, 17, 5, 30, 45, 0, time.UTC)
-	dur := Diff(start, end)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = dur.Human(EN)
-	}
-}
-
-func BenchmarkDurationHumanGerman(b *testing.B) {
-	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	end := time.Date(2026, 11, 17, 5, 30, 45, 0, time.UTC)
-	dur := Diff(start, end)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = dur.Human(DE)
-	}
-}

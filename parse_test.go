@@ -215,63 +215,6 @@ func TestParseWhitespace(t *testing.T) {
 	}
 }
 
-// BenchmarkParse benchmarks the Parse function with different formats
-func BenchmarkParse(b *testing.B) {
-	benchmarks := []struct {
-		name  string
-		input string
-	}{
-		{"ISO format", "2026-02-09"},
-		{"ISO slash", "2026/02/09"},
-		{"EU format", "09.02.2026"},
-		{"RFC2822", "Mon, 09 Feb 2026 00:00:00 +0000"},
-	}
-
-	for _, bm := range benchmarks {
-		b.Run(bm.name, func(b *testing.B) {
-			b.ReportAllocs()
-			for i := 0; i < b.N; i++ {
-				_, err := Parse(bm.input)
-				if err != nil {
-					b.Fatalf("Parse failed: %v", err)
-				}
-			}
-		})
-	}
-}
-
-// BenchmarkParseError benchmarks error case (ambiguous format)
-func BenchmarkParseError(b *testing.B) {
-	input := "01/02/2026" // Ambiguous format
-
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		_, err := Parse(input)
-		if err == nil {
-			b.Fatal("Expected error for ambiguous format")
-		}
-	}
-}
-
-func BenchmarkParseWithLayout(b *testing.B) {
-	layout := "02/01/2006"
-	input := "09/02/2026"
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = ParseWithLayout(input, layout)
-	}
-}
-
-func BenchmarkParseWithLayoutCustom(b *testing.B) {
-	layout := "2. January 2006"
-	input := "9. February 2026"
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = ParseWithLayout(input, layout)
-	}
-}
 
 // containsSubstring is a helper function to check if a string contains a substring
 func containsSubstring(s, substr string) bool {
@@ -839,23 +782,6 @@ func TestParseRelativeImmutability(t *testing.T) {
 	}
 }
 
-func BenchmarkParseRelativeKeyword(b *testing.B) {
-	clock := NewFixedClock(time.Date(2026, 2, 15, 12, 0, 0, 0, time.UTC))
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = ParseRelativeWithClock("today", clock)
-	}
-}
-
-func BenchmarkParseRelativeOffset(b *testing.B) {
-	clock := NewFixedClock(time.Date(2026, 2, 15, 12, 0, 0, 0, time.UTC))
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = ParseRelativeWithClock("+2 days", clock)
-	}
-}
 
 func TestMustParse_Success(t *testing.T) {
 	tests := []struct {
@@ -923,4 +849,31 @@ func TestMustParse_PanicMessage(t *testing.T) {
 	}()
 
 	MustParse("invalid-input")
+}
+
+// TestIsYearPrefix_EdgeCases tests edge cases for the isYearPrefix function
+func TestIsYearPrefix_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		{"valid year 2026", "2026", true},
+		{"valid year 1000", "1000", true},
+		{"invalid year 0999", "0999", false}, // Starts with 0
+		{"invalid year 999", "999", false},   // Too short
+		{"invalid non-digits", "abcd", false},
+		{"invalid mixed", "20a6", false},
+		{"empty string", "", false},
+		{"year 9999", "9999", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isYearPrefix(tt.input)
+			if result != tt.expected {
+				t.Errorf("isYearPrefix(%q) = %v, want %v", tt.input, result, tt.expected)
+			}
+		})
+	}
 }

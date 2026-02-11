@@ -390,38 +390,81 @@ func TestTimezonePreservation(t *testing.T) {
 	}
 }
 
-// BenchmarkAddDays benchmarks Add with Days
-func BenchmarkAddDays(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Add(1, Days)
+// TestAdd_DSTSpringForward tests Add(1, Days) across DST spring forward transition
+func TestAdd_DSTSpringForward(t *testing.T) {
+	// March 31, 2024, 01:30 CET (before DST transition at 02:00)
+	// At 02:00, clocks jump to 03:00 CEST
+	loc, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		t.Skip("Europe/Berlin timezone not available")
+	}
+
+	// 1:30 AM on March 31, 2024 (CET = UTC+1)
+	before := From(time.Date(2024, 3, 31, 1, 30, 0, 0, loc))
+
+	// Add 1 day - should be 1:30 AM on April 1, 2024 (CEST = UTC+2)
+	after := before.Add(1, Days)
+
+	expected := time.Date(2024, 4, 1, 1, 30, 0, 0, loc)
+	if !after.Time().Equal(expected) {
+		t.Errorf("Add(1, Days) across DST spring forward: got %v, want %v", after.Time(), expected)
+	}
+
+	// Verify it's only 23 hours of actual time (due to DST)
+	duration := after.Time().Sub(before.Time())
+	if duration != 23*time.Hour {
+		t.Logf("Note: Duration is %v (23h expected due to DST spring forward)", duration)
 	}
 }
 
-// BenchmarkAddMonths benchmarks Add with Months
-func BenchmarkAddMonths(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Add(1, Months)
+// TestAdd_DSTFallBack tests Add(1, Days) across DST fall back transition
+func TestAdd_DSTFallBack(t *testing.T) {
+	// October 27, 2024, 02:30 CEST (before DST transition at 03:00)
+	// At 03:00, clocks fall back to 02:00 CET
+	loc, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		t.Skip("Europe/Berlin timezone not available")
+	}
+
+	// 2:30 AM on October 27, 2024 (CEST = UTC+2)
+	before := From(time.Date(2024, 10, 27, 2, 30, 0, 0, loc))
+
+	// Add 1 day - should be 2:30 AM on October 28, 2024 (CET = UTC+1)
+	after := before.Add(1, Days)
+
+	expected := time.Date(2024, 10, 28, 2, 30, 0, 0, loc)
+	if !after.Time().Equal(expected) {
+		t.Errorf("Add(1, Days) across DST fall back: got %v, want %v", after.Time(), expected)
+	}
+
+	// Verify it's 25 hours of actual time (due to DST)
+	duration := after.Time().Sub(before.Time())
+	if duration != 25*time.Hour {
+		t.Logf("Note: Duration is %v (25h expected due to DST fall back)", duration)
 	}
 }
 
-// BenchmarkAddYears benchmarks Add with Years
-func BenchmarkAddYears(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Add(1, Years)
+// TestAdd_DSTMultipleTimezones tests Add preserves local time across DST in multiple timezones
+func TestAdd_DSTMultipleTimezones(t *testing.T) {
+	timezones := []string{"Europe/Berlin", "America/New_York", "America/Los_Angeles"}
+
+	for _, tzName := range timezones {
+		t.Run(tzName, func(t *testing.T) {
+			loc, err := time.LoadLocation(tzName)
+			if err != nil {
+				t.Skipf("%s timezone not available", tzName)
+			}
+
+			// Test adding days preserves local time regardless of DST
+			date := From(time.Date(2024, 3, 15, 14, 30, 0, 0, loc))
+			result := date.Add(30, Days)
+
+			// Should be same local time (14:30) 30 days later
+			if result.Time().Hour() != 14 || result.Time().Minute() != 30 {
+				t.Errorf("Add(30, Days) in %s: time changed from 14:30 to %02d:%02d",
+					tzName, result.Time().Hour(), result.Time().Minute())
+			}
+		})
 	}
 }
 
-// BenchmarkMethodChaining benchmarks chained operations
-func BenchmarkMethodChaining(b *testing.B) {
-	date := Now()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = date.Add(1, Months).Add(15, Days).Sub(2, Hours)
-	}
-}

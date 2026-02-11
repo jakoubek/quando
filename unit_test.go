@@ -136,12 +136,3 @@ func TestUnitComparability(t *testing.T) {
 	}
 }
 
-// BenchmarkUnitString benchmarks the String() method
-func BenchmarkUnitString(b *testing.B) {
-	units := []Unit{Seconds, Minutes, Hours, Days, Weeks, Months, Quarters, Years}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		u := units[i%len(units)]
-		_ = u.String()
-	}
-}
