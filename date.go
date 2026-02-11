@@ -5,8 +5,22 @@ import (
 	"time"
 )
 
-// Lang represents a language for i18n formatting.
-// This is a placeholder - full implementation in i18n.go.
+// Lang represents a language for internationalization (i18n) in formatting.
+//
+// Phase 1 supports English (EN) and German (DE). Future phases will expand to
+// include 21 additional languages: FR, ES, IT, PT, NL, PL, RU, JA, ZH, KO, AR,
+// HI, TR, SV, NO, DA, FI, CS, HU, RO, UK, EL.
+//
+// Language affects:
+//   - Format(Long): month and weekday names
+//   - FormatLayout: custom layouts with month/weekday names
+//   - Duration.Human(): time unit names
+//
+// Language does NOT affect:
+//   - ISO, EU, US, RFC2822 formats (always language-independent)
+//   - Numeric outputs (WeekNumber, Quarter, DayOfYear)
+//
+// See i18n.go for translation data and helper methods.
 type Lang string
 
 const (

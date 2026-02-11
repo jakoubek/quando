@@ -458,3 +458,37 @@ func ExampleDate_In_error() {
 
 	// Output: Invalid timezone name
 }
+
+// ExampleLang_MonthName demonstrates localized month names
+func ExampleLang_MonthName() {
+	fmt.Println(quando.EN.MonthName(time.February))
+	fmt.Println(quando.DE.MonthName(time.February))
+	// Output:
+	// February
+	// Februar
+}
+
+// ExampleLang_WeekdayName demonstrates localized weekday names
+func ExampleLang_WeekdayName() {
+	fmt.Println(quando.EN.WeekdayName(time.Monday))
+	fmt.Println(quando.DE.WeekdayName(time.Monday))
+	// Output:
+	// Monday
+	// Montag
+}
+
+// ExampleLang_DurationUnit demonstrates localized duration units
+func ExampleLang_DurationUnit() {
+	// Singular
+	fmt.Println(quando.EN.DurationUnit("month", false))
+	fmt.Println(quando.DE.DurationUnit("month", false))
+
+	// Plural
+	fmt.Println(quando.EN.DurationUnit("month", true))
+	fmt.Println(quando.DE.DurationUnit("month", true))
+	// Output:
+	// month
+	// Monat
+	// months
+	// Monate
+}
