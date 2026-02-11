@@ -112,3 +112,38 @@ func ExampleFixedClock_deterministic() {
 	// Date 2: 2026-02-09 12:00:00
 	// Same: true
 }
+
+// ExampleUnit demonstrates the Unit type
+func ExampleUnit() {
+	// Units are used with Add, Sub, StartOf, EndOf operations
+	units := []quando.Unit{
+		quando.Seconds,
+		quando.Minutes,
+		quando.Hours,
+		quando.Days,
+		quando.Weeks,
+		quando.Months,
+		quando.Quarters,
+		quando.Years,
+	}
+
+	for _, u := range units {
+		fmt.Println(u.String())
+	}
+	// Output:
+	// seconds
+	// minutes
+	// hours
+	// days
+	// weeks
+	// months
+	// quarters
+	// years
+}
+
+// ExampleUnit_String demonstrates the String method
+func ExampleUnit_String() {
+	unit := quando.Days
+	fmt.Printf("Unit: %s\n", unit)
+	// Output: Unit: days
+}
