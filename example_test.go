@@ -629,3 +629,77 @@ func ExampleParseRelative_error() {
 	}
 	// Output: Complex expressions not yet supported
 }
+
+// ExampleDate_Format demonstrates basic date formatting
+func ExampleDate_Format() {
+	date := quando.From(time.Date(2026, 2, 9, 12, 30, 45, 0, time.UTC))
+
+	fmt.Println(date.Format(quando.ISO))
+	fmt.Println(date.Format(quando.EU))
+	fmt.Println(date.Format(quando.US))
+	fmt.Println(date.Format(quando.Long))
+	// Output:
+	// 2026-02-09
+	// 09.02.2026
+	// 02/09/2026
+	// February 9, 2026
+}
+
+// ExampleDate_Format_isoFormat demonstrates ISO 8601 format
+func ExampleDate_Format_isoFormat() {
+	date := quando.From(time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC))
+	fmt.Println(date.Format(quando.ISO))
+	// Output: 2026-02-09
+}
+
+// ExampleDate_Format_euFormat demonstrates European format
+func ExampleDate_Format_euFormat() {
+	date := quando.From(time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC))
+	fmt.Println(date.Format(quando.EU))
+	// Output: 09.02.2026
+}
+
+// ExampleDate_Format_usFormat demonstrates US format
+func ExampleDate_Format_usFormat() {
+	date := quando.From(time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC))
+	fmt.Println(date.Format(quando.US))
+	// Output: 02/09/2026
+}
+
+// ExampleDate_Format_longFormat demonstrates long format in English
+func ExampleDate_Format_longFormat() {
+	date := quando.From(time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC))
+	fmt.Println(date.Format(quando.Long))
+	// Output: February 9, 2026
+}
+
+// ExampleDate_Format_longFormatGerman demonstrates long format in German
+func ExampleDate_Format_longFormatGerman() {
+	date := quando.From(time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC)).WithLang(quando.DE)
+	fmt.Println(date.Format(quando.Long))
+	// Output: 9. Februar 2026
+}
+
+// ExampleDate_Format_rfc2822Format demonstrates RFC 2822 email format
+func ExampleDate_Format_rfc2822Format() {
+	date := quando.From(time.Date(2026, 2, 9, 12, 30, 45, 0, time.UTC))
+	fmt.Println(date.Format(quando.RFC2822))
+	// Output: Mon, 09 Feb 2026 12:30:45 +0000
+}
+
+// ExampleDate_Format_languageIndependence demonstrates that most formats ignore language
+func ExampleDate_Format_languageIndependence() {
+	date := quando.From(time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC))
+
+	// ISO format is always the same regardless of language
+	dateEN := date.WithLang(quando.EN)
+	dateDE := date.WithLang(quando.DE)
+
+	fmt.Println("ISO (EN):", dateEN.Format(quando.ISO))
+	fmt.Println("ISO (DE):", dateDE.Format(quando.ISO))
+	fmt.Println("Same:", dateEN.Format(quando.ISO) == dateDE.Format(quando.ISO))
+	// Output:
+	// ISO (EN): 2026-02-09
+	// ISO (DE): 2026-02-09
+	// Same: true
+}
