@@ -229,3 +229,51 @@ func ExampleDate_Next_sameWeekday() {
 	fmt.Printf("Days later: %d\n", int(nextMonday.Time().Sub(monday.Time()).Hours()/24))
 	// Output: Days later: 7
 }
+
+// ExampleDiff demonstrates calculating the duration between two dates
+func ExampleDiff() {
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2026, 12, 31, 0, 0, 0, 0, time.UTC)
+
+	dur := quando.Diff(start, end)
+
+	fmt.Printf("Days: %d\n", dur.Days())
+	fmt.Printf("Months: %d\n", dur.Months())
+	fmt.Printf("Years: %d\n", dur.Years())
+	// Output:
+	// Days: 364
+	// Months: 11
+	// Years: 0
+}
+
+// ExampleDuration_MonthsFloat demonstrates precise month calculations
+func ExampleDuration_MonthsFloat() {
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2026, 2, 16, 0, 0, 0, 0, time.UTC)
+
+	dur := quando.Diff(start, end)
+
+	intMonths := dur.Months()
+	floatMonths := dur.MonthsFloat()
+
+	fmt.Printf("Integer months: %d\n", intMonths)
+	fmt.Printf("Float months: %.2f\n", floatMonths)
+	// Output:
+	// Integer months: 1
+	// Float months: 1.54
+}
+
+// ExampleDuration_negative demonstrates negative durations
+func ExampleDuration_negative() {
+	// When start is after end, duration is negative
+	start := time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	dur := quando.Diff(start, end)
+
+	fmt.Printf("Months: %d\n", dur.Months())
+	fmt.Printf("Years: %d\n", dur.Years())
+	// Output:
+	// Months: -12
+	// Years: -1
+}
