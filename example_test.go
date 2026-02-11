@@ -492,3 +492,48 @@ func ExampleLang_DurationUnit() {
 	// months
 	// Monate
 }
+
+// ExampleDuration_Human demonstrates human-readable duration formatting in English
+func ExampleDuration_Human() {
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2026, 11, 17, 0, 0, 0, 0, time.UTC)
+
+	dur := quando.Diff(start, end)
+	fmt.Println(dur.Human())
+	// Output: 10 months, 16 days
+}
+
+// ExampleDuration_Human_german demonstrates human-readable duration formatting in German
+func ExampleDuration_Human_german() {
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2026, 1, 3, 5, 0, 0, 0, time.UTC)
+
+	dur := quando.Diff(start, end)
+	fmt.Println(dur.Human(quando.DE))
+	// Output: 2 Tage, 5 Stunden
+}
+
+// ExampleDuration_Human_adaptive demonstrates adaptive granularity
+func ExampleDuration_Human_adaptive() {
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// Large duration: shows years and months
+	end1 := time.Date(2027, 3, 15, 0, 0, 0, 0, time.UTC)
+	dur1 := quando.Diff(start, end1)
+	fmt.Println(dur1.Human())
+
+	// Medium duration: shows days and hours
+	end2 := time.Date(2026, 1, 3, 5, 0, 0, 0, time.UTC)
+	dur2 := quando.Diff(start, end2)
+	fmt.Println(dur2.Human())
+
+	// Small duration: shows seconds only
+	end3 := time.Date(2026, 1, 1, 0, 0, 45, 0, time.UTC)
+	dur3 := quando.Diff(start, end3)
+	fmt.Println(dur3.Human())
+
+	// Output:
+	// 1 year, 2 months
+	// 2 days, 5 hours
+	// 45 seconds
+}

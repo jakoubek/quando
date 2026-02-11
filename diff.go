@@ -1,6 +1,9 @@
 package quando
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // Duration represents the difference between two dates.
 // It provides methods to extract the duration in various units.
@@ -154,4 +157,128 @@ func (d Duration) MonthsFloat() float64 {
 // This provides more accurate calculations than the integer Years() method.
 func (d Duration) YearsFloat() float64 {
 	return d.MonthsFloat() / 12.0
+}
+
+// Human returns a human-readable representation of the duration.
+// It shows the two largest relevant time units for adaptive granularity.
+//
+// If no language is specified, English (EN) is used by default.
+//
+// Examples:
+//
+//	dur := quando.Diff(start, end)
+//	dur.Human()           // "10 months, 16 days" (English default)
+//	dur.Human(quando.DE)  // "10 Monate, 16 Tage" (German)
+//
+// Adaptive granularity examples:
+//   - 10 months, 16 days → "10 months, 16 days"
+//   - 2 days, 5 hours → "2 days, 5 hours"
+//   - 3 hours, 20 minutes → "3 hours, 20 minutes"
+//   - 45 seconds → "45 seconds"
+//   - 0 → "0 seconds"
+func (d Duration) Human(lang ...Lang) string {
+	// Default to English if no language specified
+	l := EN
+	if len(lang) > 0 {
+		l = lang[0]
+	}
+
+	// Handle negative durations
+	negative := d.start.After(d.end)
+
+	// Calculate all time components (using absolute values)
+	totalSeconds := d.Seconds()
+	if totalSeconds < 0 {
+		totalSeconds = -totalSeconds
+	}
+
+	// Calculate months and years
+	months := d.Months()
+	if months < 0 {
+		months = -months
+	}
+	years := months / 12
+	remainingMonths := months % 12
+
+	// Calculate remaining components after extracting larger units
+	// After years and months, calculate remaining days
+	// We need to subtract the time represented by years and months from total
+
+	// Start from the beginning and add years + months
+	baseTime := d.start
+	if negative {
+		baseTime = d.end
+	}
+
+	afterYearsMonths := baseTime.AddDate(years, remainingMonths, 0)
+
+	// Calculate remaining time
+	var remainingEnd time.Time
+	if negative {
+		remainingEnd = d.start
+	} else {
+		remainingEnd = d.end
+	}
+
+	remainingDuration := remainingEnd.Sub(afterYearsMonths)
+	remainingDays := int(remainingDuration.Hours() / 24)
+	remainingHours := int(remainingDuration.Hours()) % 24
+	remainingMinutes := int(remainingDuration.Minutes()) % 60
+	remainingSeconds := int(remainingDuration.Seconds()) % 60
+
+	// Build component list with values
+	type component struct {
+		value int
+		unit  string
+	}
+
+	components := []component{
+		{years, "year"},
+		{remainingMonths, "month"},
+		{remainingDays, "day"},
+		{remainingHours, "hour"},
+		{remainingMinutes, "minute"},
+		{remainingSeconds, "second"},
+	}
+
+	// Filter to non-zero components
+	var nonZero []component
+	for _, c := range components {
+		if c.value > 0 {
+			nonZero = append(nonZero, c)
+		}
+	}
+
+	// Handle zero duration special case
+	if len(nonZero) == 0 {
+		return "0 " + l.DurationUnit("second", true)
+	}
+
+	// Take up to 2 largest units for adaptive granularity
+	displayUnits := nonZero
+	if len(displayUnits) > 2 {
+		displayUnits = displayUnits[:2]
+	}
+
+	// Build the output string
+	var parts []string
+	for _, c := range displayUnits {
+		unitName := l.DurationUnit(c.unit, c.value != 1)
+		parts = append(parts, fmt.Sprintf("%d %s", c.value, unitName))
+	}
+
+	result := ""
+	if len(parts) == 1 {
+		result = parts[0]
+	} else if len(parts) == 2 {
+		result = parts[0] + ", " + parts[1]
+	}
+
+	// Add negative prefix if needed
+	if negative {
+		// Use minus sign for simplicity (could be localized in future)
+		result = "-" + result
+	}
+
+	return result
 }

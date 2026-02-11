@@ -2,6 +2,7 @@ package quando
 
 import (
 	"math"
+	"strings"
 	"testing"
 	"time"
 )
@@ -560,5 +561,198 @@ func TestFloatPrecision(t *testing.T) {
 	// Float should have fractional part
 	if floatMonths == math.Floor(floatMonths) {
 		t.Error("MonthsFloat() should have fractional part")
+	}
+}
+
+func TestDurationHuman(t *testing.T) {
+	tests := []struct {
+		name     string
+		start    time.Time
+		end      time.Time
+		lang     Lang
+		expected string
+	}{
+		// English tests
+		{
+			name:     "10 months 16 days EN",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 11, 17, 0, 0, 0, 0, time.UTC),
+			lang:     EN,
+			expected: "10 months, 16 days",
+		},
+		{
+			name:     "2 days 5 hours EN",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 1, 3, 5, 0, 0, 0, time.UTC),
+			lang:     EN,
+			expected: "2 days, 5 hours",
+		},
+		{
+			name:     "3 hours 20 minutes EN",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 1, 1, 3, 20, 0, 0, time.UTC),
+			lang:     EN,
+			expected: "3 hours, 20 minutes",
+		},
+		{
+			name:     "45 seconds EN",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 1, 1, 0, 0, 45, 0, time.UTC),
+			lang:     EN,
+			expected: "45 seconds",
+		},
+		{
+			name:     "zero duration EN",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			lang:     EN,
+			expected: "0 seconds",
+		},
+		{
+			name:     "1 year 2 months EN (singular/plural mix)",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2027, 3, 1, 0, 0, 0, 0, time.UTC),
+			lang:     EN,
+			expected: "1 year, 2 months",
+		},
+		{
+			name:     "1 day EN (singular)",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC),
+			lang:     EN,
+			expected: "1 day",
+		},
+
+		// German tests
+		{
+			name:     "10 months 16 days DE",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 11, 17, 0, 0, 0, 0, time.UTC),
+			lang:     DE,
+			expected: "10 Monate, 16 Tage",
+		},
+		{
+			name:     "2 days 5 hours DE",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 1, 3, 5, 0, 0, 0, time.UTC),
+			lang:     DE,
+			expected: "2 Tage, 5 Stunden",
+		},
+		{
+			name:     "3 hours 20 minutes DE",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 1, 1, 3, 20, 0, 0, time.UTC),
+			lang:     DE,
+			expected: "3 Stunden, 20 Minuten",
+		},
+		{
+			name:     "45 seconds DE",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 1, 1, 0, 0, 45, 0, time.UTC),
+			lang:     DE,
+			expected: "45 Sekunden",
+		},
+		{
+			name:     "zero duration DE",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			lang:     DE,
+			expected: "0 Sekunden",
+		},
+
+		// Negative duration tests
+		{
+			name:     "negative 2 days EN",
+			start:    time.Date(2026, 1, 3, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			lang:     EN,
+			expected: "-2 days",
+		},
+		{
+			name:     "negative 1 month DE",
+			start:    time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			lang:     DE,
+			expected: "-1 Monat",
+		},
+
+		// Edge cases
+		{
+			name:     "exactly 1 year EN",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC),
+			lang:     EN,
+			expected: "1 year",
+		},
+		{
+			name:     "1 minute 30 seconds EN (only shows 2 largest)",
+			start:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+			end:      time.Date(2026, 1, 1, 0, 1, 30, 0, time.UTC),
+			lang:     EN,
+			expected: "1 minute, 30 seconds",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dur := Diff(tt.start, tt.end)
+			result := dur.Human(tt.lang)
+			if result != tt.expected {
+				t.Errorf("Human(%v) = %q, want %q", tt.lang, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestDurationHumanDefaultLanguage(t *testing.T) {
+	// Test that Human() without argument defaults to English
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2026, 1, 3, 5, 0, 0, 0, time.UTC)
+	dur := Diff(start, end)
+
+	result := dur.Human()
+	expected := "2 days, 5 hours"
+
+	if result != expected {
+		t.Errorf("Human() = %q, want %q (should default to English)", result, expected)
+	}
+}
+
+func TestDurationHumanAdaptiveGranularity(t *testing.T) {
+	// Test that only the 2 largest units are shown
+	// 1 year, 2 months, 3 days should show "1 year, 2 months"
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2027, 3, 4, 0, 0, 0, 0, time.UTC)
+	dur := Diff(start, end)
+
+	result := dur.Human(EN)
+	// Should only show years and months, not days
+	if !strings.Contains(result, "year") || !strings.Contains(result, "month") {
+		t.Errorf("Human() = %q, should contain 'year' and 'month'", result)
+	}
+	if strings.Contains(result, "day") {
+		t.Errorf("Human() = %q, should NOT contain 'day' (only 2 largest units)", result)
+	}
+}
+
+func BenchmarkDurationHuman(b *testing.B) {
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2026, 11, 17, 5, 30, 45, 0, time.UTC)
+	dur := Diff(start, end)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = dur.Human(EN)
+	}
+}
+
+func BenchmarkDurationHumanGerman(b *testing.B) {
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2026, 11, 17, 5, 30, 45, 0, time.UTC)
+	dur := Diff(start, end)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = dur.Human(DE)
 	}
 }
