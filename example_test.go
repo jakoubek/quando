@@ -703,3 +703,74 @@ func ExampleDate_Format_languageIndependence() {
 	// ISO (DE): 2026-02-09
 	// Same: true
 }
+
+// ExampleDate_FormatLayout demonstrates custom layout formatting
+func ExampleDate_FormatLayout() {
+	date := quando.From(time.Date(2026, 2, 9, 14, 30, 0, 0, time.UTC))
+
+	// Common layouts
+	fmt.Println(date.FormatLayout("Monday, January 2, 2006"))
+	fmt.Println(date.FormatLayout("Mon, Jan 2, 2006"))
+	fmt.Println(date.FormatLayout("January 2, 2006"))
+	fmt.Println(date.FormatLayout("02 Jan 2006"))
+	// Output:
+	// Monday, February 9, 2026
+	// Mon, Feb 9, 2026
+	// February 9, 2026
+	// 09 Feb 2026
+}
+
+// ExampleDate_FormatLayout_german demonstrates German localization with custom layouts
+func ExampleDate_FormatLayout_german() {
+	date := quando.From(time.Date(2026, 2, 9, 14, 30, 0, 0, time.UTC)).WithLang(quando.DE)
+
+	// German formats
+	fmt.Println(date.FormatLayout("Monday, 2. January 2006"))
+	fmt.Println(date.FormatLayout("Mon, 02. Jan 2006"))
+	fmt.Println(date.FormatLayout("2. January 2006"))
+	// Output:
+	// Montag, 9. Februar 2026
+	// Mo, 09. Feb 2026
+	// 9. Februar 2026
+}
+
+// ExampleDate_FormatLayout_custom demonstrates custom layouts with time components
+func ExampleDate_FormatLayout_custom() {
+	date := quando.From(time.Date(2026, 2, 9, 14, 30, 45, 0, time.UTC))
+
+	// With time
+	fmt.Println(date.FormatLayout("Monday, January 2, 2006 at 15:04"))
+	fmt.Println(date.FormatLayout("Mon Jan 2 15:04:05 2006"))
+	fmt.Println(date.FormatLayout("2006-01-02 15:04:05"))
+
+	// German with time
+	dateDE := date.WithLang(quando.DE)
+	fmt.Println(dateDE.FormatLayout("Monday, 2. January 2006 um 15:04 Uhr"))
+	// Output:
+	// Monday, February 9, 2026 at 14:30
+	// Mon Feb 9 14:30:45 2026
+	// 2026-02-09 14:30:45
+	// Montag, 9. Februar 2026 um 14:30 Uhr
+}
+
+// ExampleDate_FormatLayout_comparison demonstrates comparing preset Format vs custom FormatLayout
+func ExampleDate_FormatLayout_comparison() {
+	date := quando.From(time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC))
+
+	// Preset formats
+	fmt.Println("Format(Long):", date.Format(quando.Long))
+	fmt.Println("Format(ISO):", date.Format(quando.ISO))
+
+	// Custom layouts (equivalent)
+	fmt.Println("FormatLayout(custom):", date.FormatLayout("January 2, 2006"))
+	fmt.Println("FormatLayout(ISO):", date.FormatLayout("2006-01-02"))
+
+	// Custom layout flexibility
+	fmt.Println("FormatLayout(custom style):", date.FormatLayout("Mon, Jan 2"))
+	// Output:
+	// Format(Long): February 9, 2026
+	// Format(ISO): 2026-02-09
+	// FormatLayout(custom): February 9, 2026
+	// FormatLayout(ISO): 2026-02-09
+	// FormatLayout(custom style): Mon, Feb 9
+}

@@ -277,3 +277,257 @@ func BenchmarkFormat_RFC2822(b *testing.B) {
 		_ = date.Format(RFC2822)
 	}
 }
+
+// TestFormatLayout tests basic FormatLayout functionality
+func TestFormatLayout(t *testing.T) {
+	date := From(time.Date(2026, 2, 9, 14, 30, 45, 0, time.UTC))
+
+	tests := []struct {
+		name     string
+		lang     Lang
+		layout   string
+		expected string
+	}{
+		// English (default)
+		{
+			name:     "EN: Full month and weekday",
+			lang:     EN,
+			layout:   "Monday, 2. January 2006",
+			expected: "Monday, 9. February 2026",
+		},
+		{
+			name:     "EN: Short month and weekday",
+			lang:     EN,
+			layout:   "Mon, 02 Jan 2006",
+			expected: "Mon, 09 Feb 2026",
+		},
+		{
+			name:     "EN: With time",
+			lang:     EN,
+			layout:   "Monday, January 2, 2006 at 15:04",
+			expected: "Monday, February 9, 2026 at 14:30",
+		},
+
+		// German
+		{
+			name:     "DE: Full month and weekday",
+			lang:     DE,
+			layout:   "Monday, 2. January 2006",
+			expected: "Montag, 9. Februar 2026",
+		},
+		{
+			name:     "DE: Short month and weekday",
+			lang:     DE,
+			layout:   "Mon, 02 Jan 2006",
+			expected: "Mo, 09 Feb 2026",
+		},
+		{
+			name:     "DE: With time",
+			lang:     DE,
+			layout:   "Monday, 2. January 2006 um 15:04 Uhr",
+			expected: "Montag, 9. Februar 2026 um 14:30 Uhr",
+		},
+
+		// Empty lang defaults to EN
+		{
+			name:     "Empty lang defaults to EN",
+			lang:     "",
+			layout:   "Monday, January 2, 2006",
+			expected: "Monday, February 9, 2026",
+		},
+
+		// Numeric only (language-independent)
+		{
+			name:     "Numeric only layout",
+			lang:     DE,
+			layout:   "2006-01-02 15:04:05",
+			expected: "2026-02-09 14:30:45",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testDate := date
+			if tt.lang != "" {
+				testDate = date.WithLang(tt.lang)
+			}
+			result := testDate.FormatLayout(tt.layout)
+			if result != tt.expected {
+				t.Errorf("FormatLayout(%q) with lang=%v = %q, want %q", tt.layout, tt.lang, result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestFormatLayout_EdgeCases tests edge cases including all months, all weekdays, and substring collisions
+func TestFormatLayout_EdgeCases(t *testing.T) {
+	// Test all 12 months - full names
+	t.Run("All months full names DE", func(t *testing.T) {
+		for m := time.January; m <= time.December; m++ {
+			date := From(time.Date(2026, m, 15, 0, 0, 0, 0, time.UTC)).WithLang(DE)
+			result := date.FormatLayout("January 2006")
+			expectedMonth := DE.MonthName(m)
+			expected := expectedMonth + " 2026"
+			if result != expected {
+				t.Errorf("Month %d: FormatLayout = %q, want %q", m, result, expected)
+			}
+		}
+	})
+
+	// Test all 12 months - short names
+	t.Run("All months short names DE", func(t *testing.T) {
+		for m := time.January; m <= time.December; m++ {
+			date := From(time.Date(2026, m, 15, 0, 0, 0, 0, time.UTC)).WithLang(DE)
+			result := date.FormatLayout("Jan 2006")
+			expectedMonth := DE.MonthNameShort(m)
+			expected := expectedMonth + " 2026"
+			if result != expected {
+				t.Errorf("Month %d: FormatLayout = %q, want %q", m, result, expected)
+			}
+		}
+	})
+
+	// Test all 7 weekdays - full names
+	t.Run("All weekdays full names DE", func(t *testing.T) {
+		// Start with Monday, Feb 9, 2026
+		for i := 0; i < 7; i++ {
+			date := From(time.Date(2026, 2, 9+i, 0, 0, 0, 0, time.UTC)).WithLang(DE)
+			weekday := date.Time().Weekday()
+			result := date.FormatLayout("Monday")
+			expected := DE.WeekdayName(weekday)
+			if result != expected {
+				t.Errorf("Weekday %v: FormatLayout = %q, want %q", weekday, result, expected)
+			}
+		}
+	})
+
+	// Test all 7 weekdays - short names
+	t.Run("All weekdays short names DE", func(t *testing.T) {
+		// Start with Monday, Feb 9, 2026
+		for i := 0; i < 7; i++ {
+			date := From(time.Date(2026, 2, 9+i, 0, 0, 0, 0, time.UTC)).WithLang(DE)
+			weekday := date.Time().Weekday()
+			result := date.FormatLayout("Mon")
+			expected := DE.WeekdayNameShort(weekday)
+			if result != expected {
+				t.Errorf("Weekday %v: FormatLayout = %q, want %q", weekday, result, expected)
+			}
+		}
+	})
+
+	// Test substring collision: "March" vs "Mar"
+	t.Run("Substring collision March/Mar", func(t *testing.T) {
+		date := From(time.Date(2026, 3, 15, 0, 0, 0, 0, time.UTC)).WithLang(DE)
+		// Layout contains both full and short month name
+		result := date.FormatLayout("March and Mar")
+		expected := "März and Mär"
+		if result != expected {
+			t.Errorf("Substring collision: FormatLayout = %q, want %q", result, expected)
+		}
+	})
+
+	// Test complex layout with multiple components
+	t.Run("Complex layout with multiple components", func(t *testing.T) {
+		date := From(time.Date(2026, 12, 25, 15, 30, 45, 0, time.UTC)).WithLang(DE)
+		result := date.FormatLayout("Monday, January 2, 2006 at 15:04:05 (Mon, Jan)")
+		expected := "Freitag, Dezember 25, 2026 at 15:30:45 (Fr, Dez)" // Dec 25, 2026 is Friday
+		if result != expected {
+			t.Errorf("Complex layout: FormatLayout = %q, want %q", result, expected)
+		}
+	})
+
+	// Test leap year edge case
+	t.Run("Leap year Feb 29", func(t *testing.T) {
+		date := From(time.Date(2024, 2, 29, 0, 0, 0, 0, time.UTC)).WithLang(DE)
+		result := date.FormatLayout("Monday, January 2, 2006")
+		expected := "Donnerstag, Februar 29, 2024"
+		if result != expected {
+			t.Errorf("Leap year: FormatLayout = %q, want %q", result, expected)
+		}
+	})
+}
+
+// TestFormatLayout_NumericFormatsLanguageIndependent verifies numeric layouts are language-independent
+func TestFormatLayout_NumericFormatsLanguageIndependent(t *testing.T) {
+	date := From(time.Date(2026, 2, 9, 14, 30, 45, 0, time.UTC))
+
+	numericLayouts := []string{
+		"2006-01-02",
+		"02.01.2006",
+		"01/02/2006",
+		"2006-01-02 15:04:05",
+		"15:04:05",
+		"2006",
+		"01",
+		"02",
+	}
+
+	for _, layout := range numericLayouts {
+		t.Run(layout, func(t *testing.T) {
+			resultEN := date.WithLang(EN).FormatLayout(layout)
+			resultDE := date.WithLang(DE).FormatLayout(layout)
+
+			if resultEN != resultDE {
+				t.Errorf("Numeric layout %q should be language-independent: EN=%q, DE=%q", layout, resultEN, resultDE)
+			}
+		})
+	}
+}
+
+// TestFormatLayout_Immutability verifies FormatLayout doesn't modify the original Date
+func TestFormatLayout_Immutability(t *testing.T) {
+	original := From(time.Date(2026, 2, 9, 14, 30, 45, 0, time.UTC)).WithLang(DE)
+
+	// Call FormatLayout multiple times
+	_ = original.FormatLayout("Monday, January 2, 2006")
+	_ = original.FormatLayout("Mon, 02 Jan 2006")
+	_ = original.FormatLayout("2006-01-02")
+
+	// Verify original is unchanged
+	expected := time.Date(2026, 2, 9, 14, 30, 45, 0, time.UTC)
+	if !original.Time().Equal(expected) {
+		t.Errorf("FormatLayout modified the original date: got %v, want %v", original.Time(), expected)
+	}
+
+	// Verify lang is unchanged
+	if original.lang != DE {
+		t.Errorf("FormatLayout modified the lang: got %v, want %v", original.lang, DE)
+	}
+}
+
+// Benchmarks for FormatLayout
+func BenchmarkFormatLayout_EN_Simple(b *testing.B) {
+	date := From(time.Date(2026, 2, 9, 14, 30, 45, 0, time.UTC)).WithLang(EN)
+	layout := "Monday, January 2, 2006"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = date.FormatLayout(layout)
+	}
+}
+
+func BenchmarkFormatLayout_EN_Numeric(b *testing.B) {
+	date := From(time.Date(2026, 2, 9, 14, 30, 45, 0, time.UTC)).WithLang(EN)
+	layout := "2006-01-02 15:04:05"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = date.FormatLayout(layout)
+	}
+}
+
+func BenchmarkFormatLayout_DE_Simple(b *testing.B) {
+	date := From(time.Date(2026, 2, 9, 14, 30, 45, 0, time.UTC)).WithLang(DE)
+	layout := "Monday, January 2, 2006"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = date.FormatLayout(layout)
+	}
+}
+
+func BenchmarkFormatLayout_DE_Complex(b *testing.B) {
+	date := From(time.Date(2026, 2, 9, 14, 30, 45, 0, time.UTC)).WithLang(DE)
+	layout := "Monday, January 2, 2006 at 15:04:05 MST (Mon, Jan)"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = date.FormatLayout(layout)
+	}
+}
