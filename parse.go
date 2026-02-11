@@ -128,6 +128,46 @@ func Parse(s string) (Date, error) {
 	return Date{}, fmt.Errorf("parsing date %q: no matching format: %w", s, ErrInvalidFormat)
 }
 
+// MustParse parses a date string using automatic format detection and panics on error.
+//
+// This is a convenience wrapper around Parse() for use in tests and initialization code
+// where the input is known to be valid. If parsing fails, it panics with the parse error.
+//
+// IMPORTANT: This function panics on error. For production code that needs to handle
+// errors gracefully, use Parse() instead.
+//
+// Supported formats (same as Parse):
+//   - ISO format: "2026-02-09" (YYYY-MM-DD)
+//   - ISO with slash: "2026/02/09" (YYYY/MM/DD)
+//   - EU format: "09.02.2026" (DD.MM.YYYY)
+//   - RFC2822: "Mon, 09 Feb 2026 00:00:00 +0000"
+//
+// Use cases:
+//   - Test fixtures: date := quando.MustParse("2026-02-09")
+//   - Static initialization: var StartDate = quando.MustParse("2026-01-01")
+//   - Configuration where dates are validated at load time
+//
+// Example (test fixture):
+//
+//	func TestSomething(t *testing.T) {
+//	    date := quando.MustParse("2026-02-09")
+//	    // Use date without error handling...
+//	}
+//
+// Example (static initialization):
+//
+//	var (
+//	    EpochDate = quando.MustParse("1970-01-01")
+//	    Y2K       = quando.MustParse("2000-01-01")
+//	)
+func MustParse(s string) Date {
+	date, err := Parse(s)
+	if err != nil {
+		panic(fmt.Sprintf("quando.MustParse(%q): %v", s, err))
+	}
+	return date
+}
+
 // isYearPrefix checks if the first 4 characters represent a valid year (>= 1000).
 // This helps distinguish YYYY/MM/DD from DD/MM/YYYY or MM/DD/YYYY.
 func isYearPrefix(s string) bool {

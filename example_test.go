@@ -916,3 +916,39 @@ func ExampleDate_Info_leapYear() {
 	// Is weekend: false
 	// Is leap year: true
 }
+
+// ExampleMustParse demonstrates basic usage in tests and initialization
+func ExampleMustParse() {
+	// Use in test fixtures or static initialization
+	date := quando.MustParse("2026-02-09")
+	fmt.Println(date)
+	// Output: 2026-02-09 00:00:00
+}
+
+// ExampleMustParse_testFixture demonstrates using MustParse in test fixtures
+func ExampleMustParse_testFixture() {
+	// Common pattern in tests - no error handling needed
+	startDate := quando.MustParse("2026-01-01")
+	endDate := quando.MustParse("2026-12-31")
+
+	fmt.Printf("Start: %v\n", startDate.Time().Format("2006-01-02"))
+	fmt.Printf("End: %v\n", endDate.Time().Format("2006-01-02"))
+	// Output:
+	// Start: 2026-01-01
+	// End: 2026-12-31
+}
+
+// ExampleMustParse_staticInit demonstrates static initialization pattern
+func ExampleMustParse_staticInit() {
+	// Pattern for package-level constants
+	var (
+		epoch = quando.MustParse("1970-01-01")
+		y2k   = quando.MustParse("2000-01-01")
+	)
+
+	fmt.Printf("Epoch: %v\n", epoch.Time().Year())
+	fmt.Printf("Y2K: %v\n", y2k.Time().Year())
+	// Output:
+	// Epoch: 1970
+	// Y2K: 2000
+}

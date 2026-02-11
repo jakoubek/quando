@@ -2,6 +2,7 @@ package quando
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 )
@@ -854,4 +855,72 @@ func BenchmarkParseRelativeOffset(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, _ = ParseRelativeWithClock("+2 days", clock)
 	}
+}
+
+func TestMustParse_Success(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected time.Time
+	}{
+		{"ISO format", "2026-02-09", time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC)},
+		{"ISO with slash", "2026/02/09", time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC)},
+		{"EU format", "09.02.2026", time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC)},
+		{"RFC2822", "Sun, 09 Feb 2026 00:00:00 +0000", time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := MustParse(tt.input)
+
+			if !result.Time().Equal(tt.expected) {
+				t.Errorf("MustParse(%q) = %v, want %v", tt.input, result.Time(), tt.expected)
+			}
+		})
+	}
+}
+
+func TestMustParse_Panic(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"empty string", ""},
+		{"invalid format", "not-a-date"},
+		{"ambiguous slash format", "01/02/2026"},
+		{"invalid date", "2026-13-01"},
+		{"malformed", "2026-02-"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Errorf("MustParse(%q) expected panic, but didn't panic", tt.input)
+				}
+			}()
+
+			// This should panic
+			_ = MustParse(tt.input)
+		})
+	}
+}
+
+func TestMustParse_PanicMessage(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			msg := fmt.Sprint(r)
+			// Verify panic message includes the input string
+			if !containsSubstring(msg, "invalid-input") {
+				t.Errorf("panic message %q should include input string %q", msg, "invalid-input")
+			}
+			if !containsSubstring(msg, "MustParse") {
+				t.Errorf("panic message %q should include function name %q", msg, "MustParse")
+			}
+		} else {
+			t.Error("expected panic but didn't panic")
+		}
+	}()
+
+	MustParse("invalid-input")
 }
