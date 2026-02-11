@@ -150,3 +150,58 @@ func isYearPrefix(s string) bool {
 
 	return true
 }
+
+// ParseWithLayout parses a date string using an explicit Go layout format.
+// This is useful for disambiguating ambiguous formats or parsing custom formats
+// that cannot be automatically detected.
+//
+// Layout Format:
+// Go uses a reference date approach. The layout string must use the reference date:
+//   Mon Jan 2 15:04:05 MST 2006
+//
+// Components you can use in your layout:
+//   Year:    2006 (4-digit), 06 (2-digit)
+//   Month:   01 (2-digit), 1 (1-digit), Jan (short), January (long)
+//   Day:     02 (2-digit), 2 (1-digit), _2 (space-padded)
+//   Weekday: Mon (short), Monday (long)
+//   Hour:    15 (24-hour), 03 (12-hour), 3 (1-digit 12-hour)
+//   Minute:  04 (2-digit), 4 (1-digit)
+//   Second:  05 (2-digit), 5 (1-digit)
+//   AM/PM:   PM
+//   Timezone: MST (abbrev), -0700 (offset), Z07:00 (ISO 8601)
+//
+// Note: Month and weekday names must be in English (Go limitation).
+//
+// Examples:
+//
+//	// Disambiguate US vs EU slash format
+//	ParseWithLayout("01/02/2026", "01/02/2006")  // US: January 2, 2026
+//	ParseWithLayout("01/02/2026", "02/01/2006")  // EU: February 1, 2026
+//
+//	// Custom format with text month
+//	ParseWithLayout("9. February 2026", "2. January 2006")  // February 9, 2026
+//
+//	// ISO 8601 with time
+//	ParseWithLayout("2026-02-09T14:30:00", "2006-01-02T15:04:05")
+//
+// If the string cannot be parsed with the given layout, returns an error
+// wrapping ErrInvalidFormat. The returned Date uses UTC timezone unless
+// the layout and input include timezone information.
+func ParseWithLayout(s, layout string) (Date, error) {
+	// Trim whitespace from input
+	s = strings.TrimSpace(s)
+
+	// Empty input check
+	if s == "" {
+		return Date{}, fmt.Errorf("parsing date with layout %q: empty input: %w", layout, ErrInvalidFormat)
+	}
+
+	// Parse using time.Parse with the provided layout
+	t, err := time.Parse(layout, s)
+	if err != nil {
+		return Date{}, fmt.Errorf("parsing date %q with layout %q: %w", s, layout, ErrInvalidFormat)
+	}
+
+	// Wrap in quando.Date with default language
+	return Date{t: t, lang: EN}, nil
+}

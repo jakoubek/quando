@@ -252,6 +252,26 @@ func BenchmarkParseError(b *testing.B) {
 	}
 }
 
+func BenchmarkParseWithLayout(b *testing.B) {
+	layout := "02/01/2006"
+	input := "09/02/2026"
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = ParseWithLayout(input, layout)
+	}
+}
+
+func BenchmarkParseWithLayoutCustom(b *testing.B) {
+	layout := "2. January 2006"
+	input := "9. February 2026"
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = ParseWithLayout(input, layout)
+	}
+}
+
 // containsSubstring is a helper function to check if a string contains a substring
 func containsSubstring(s, substr string) bool {
 	return len(substr) == 0 || len(s) >= len(substr) && (s == substr || len(s) > len(substr) && containsSubstringHelper(s, substr))
@@ -264,4 +284,243 @@ func containsSubstringHelper(s, substr string) bool {
 		}
 	}
 	return false
+}
+
+func TestParseWithLayout(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		layout      string
+		expectYear  int
+		expectMonth time.Month
+		expectDay   int
+	}{
+		// Disambiguating US vs EU slash formats
+		{
+			name:        "US format 01/02/2026 -> Jan 2",
+			input:       "01/02/2026",
+			layout:      "01/02/2006",
+			expectYear:  2026,
+			expectMonth: time.January,
+			expectDay:   2,
+		},
+		{
+			name:        "EU format 01/02/2026 -> Feb 1",
+			input:       "01/02/2026",
+			layout:      "02/01/2006",
+			expectYear:  2026,
+			expectMonth: time.February,
+			expectDay:   1,
+		},
+		{
+			name:        "EU format 31/12/2025",
+			input:       "31/12/2025",
+			layout:      "02/01/2006",
+			expectYear:  2025,
+			expectMonth: time.December,
+			expectDay:   31,
+		},
+
+		// Custom formats
+		{
+			name:        "Custom format with English month name",
+			input:       "9. February 2026",
+			layout:      "2. January 2006",
+			expectYear:  2026,
+			expectMonth: time.February,
+			expectDay:   9,
+		},
+		{
+			name:        "Custom format with short month",
+			input:       "15-Mar-2026",
+			layout:      "02-Jan-2006",
+			expectYear:  2026,
+			expectMonth: time.March,
+			expectDay:   15,
+		},
+
+		// ISO 8601 with time
+		{
+			name:        "ISO 8601 with time",
+			input:       "2026-02-09T14:30:00",
+			layout:      "2006-01-02T15:04:05",
+			expectYear:  2026,
+			expectMonth: time.February,
+			expectDay:   9,
+		},
+
+		// Different separators
+		{
+			name:        "Dash format MM-DD-YYYY",
+			input:       "02-09-2026",
+			layout:      "01-02-2006",
+			expectYear:  2026,
+			expectMonth: time.February,
+			expectDay:   9,
+		},
+		{
+			name:        "Space separator",
+			input:       "09 02 2026",
+			layout:      "02 01 2006",
+			expectYear:  2026,
+			expectMonth: time.February,
+			expectDay:   9,
+		},
+
+		// Whitespace handling
+		{
+			name:        "Leading whitespace",
+			input:       "  09.02.2026",
+			layout:      "02.01.2006",
+			expectYear:  2026,
+			expectMonth: time.February,
+			expectDay:   9,
+		},
+		{
+			name:        "Trailing whitespace",
+			input:       "09.02.2026  ",
+			layout:      "02.01.2006",
+			expectYear:  2026,
+			expectMonth: time.February,
+			expectDay:   9,
+		},
+
+		// Edge cases
+		{
+			name:        "Leap year Feb 29",
+			input:       "29/02/2024",
+			layout:      "02/01/2006",
+			expectYear:  2024,
+			expectMonth: time.February,
+			expectDay:   29,
+		},
+		{
+			name:        "Year boundary",
+			input:       "01/01/2026",
+			layout:      "02/01/2006",
+			expectYear:  2026,
+			expectMonth: time.January,
+			expectDay:   1,
+		},
+		{
+			name:        "Year end",
+			input:       "31/12/2026",
+			layout:      "02/01/2006",
+			expectYear:  2026,
+			expectMonth: time.December,
+			expectDay:   31,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			date, err := ParseWithLayout(tt.input, tt.layout)
+			if err != nil {
+				t.Fatalf("ParseWithLayout(%q, %q) unexpected error: %v", tt.input, tt.layout, err)
+			}
+
+			tm := date.Time()
+			if tm.Year() != tt.expectYear {
+				t.Errorf("Year = %d, want %d", tm.Year(), tt.expectYear)
+			}
+			if tm.Month() != tt.expectMonth {
+				t.Errorf("Month = %v, want %v", tm.Month(), tt.expectMonth)
+			}
+			if tm.Day() != tt.expectDay {
+				t.Errorf("Day = %d, want %d", tm.Day(), tt.expectDay)
+			}
+
+			// Verify default language is set
+			if date.lang != EN {
+				t.Errorf("lang = %v, want EN", date.lang)
+			}
+		})
+	}
+}
+
+func TestParseWithLayoutErrors(t *testing.T) {
+	tests := []struct {
+		name   string
+		input  string
+		layout string
+	}{
+		{
+			name:   "Empty input",
+			input:  "",
+			layout: "02/01/2006",
+		},
+		{
+			name:   "Whitespace only",
+			input:  "   ",
+			layout: "02/01/2006",
+		},
+		{
+			name:   "Invalid date for layout",
+			input:  "99/99/2026",
+			layout: "02/01/2006",
+		},
+		{
+			name:   "Wrong layout for input",
+			input:  "2026-02-09",
+			layout: "02/01/2006",
+		},
+		{
+			name:   "Invalid month",
+			input:  "15/13/2026",
+			layout: "02/01/2006",
+		},
+		{
+			name:   "Invalid day",
+			input:  "32/01/2026",
+			layout: "02/01/2006",
+		},
+		{
+			name:   "Feb 30 (invalid)",
+			input:  "30/02/2026",
+			layout: "02/01/2006",
+		},
+		{
+			name:   "Feb 29 on non-leap year",
+			input:  "29/02/2026",
+			layout: "02/01/2006",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ParseWithLayout(tt.input, tt.layout)
+			if err == nil {
+				t.Errorf("ParseWithLayout(%q, %q) expected error, got nil", tt.input, tt.layout)
+			}
+
+			// Verify error wraps ErrInvalidFormat
+			if !errors.Is(err, ErrInvalidFormat) {
+				t.Errorf("error should wrap ErrInvalidFormat, got: %v", err)
+			}
+		})
+	}
+}
+
+func TestParseWithLayoutImmutability(t *testing.T) {
+	// Parse the same date twice with the same layout
+	date1, err1 := ParseWithLayout("01/02/2026", "01/02/2006")
+	if err1 != nil {
+		t.Fatalf("ParseWithLayout failed: %v", err1)
+	}
+
+	date2, err2 := ParseWithLayout("01/02/2026", "01/02/2006")
+	if err2 != nil {
+		t.Fatalf("ParseWithLayout failed: %v", err2)
+	}
+
+	// Modify date1
+	modified := date1.Add(5, Days)
+
+	// Verify date2 is unchanged
+	if date2.Unix() != date1.Unix() {
+		t.Error("date2 should not be affected by operations on date1")
+	}
+	if modified.Unix() == date1.Unix() {
+		t.Error("Add should return a new Date instance")
+	}
 }

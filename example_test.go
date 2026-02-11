@@ -537,3 +537,34 @@ func ExampleDuration_Human_adaptive() {
 	// 2 days, 5 hours
 	// 45 seconds
 }
+
+// ExampleParseWithLayout demonstrates parsing with explicit layout format
+func ExampleParseWithLayout() {
+	// US format: month/day/year
+	dateUS, _ := quando.ParseWithLayout("01/02/2026", "01/02/2006")
+	fmt.Println("US format:", dateUS) // January 2, 2026
+
+	// EU format: day/month/year
+	dateEU, _ := quando.ParseWithLayout("01/02/2026", "02/01/2006")
+	fmt.Println("EU format:", dateEU) // February 1, 2026
+
+	// Output:
+	// US format: 2026-01-02 00:00:00
+	// EU format: 2026-02-01 00:00:00
+}
+
+// ExampleParseWithLayout_custom demonstrates custom date format with English month names
+func ExampleParseWithLayout_custom() {
+	date, _ := quando.ParseWithLayout("9. February 2026", "2. January 2006")
+	fmt.Println(date)
+	// Output: 2026-02-09 00:00:00
+}
+
+// ExampleParseWithLayout_error demonstrates error handling
+func ExampleParseWithLayout_error() {
+	_, err := quando.ParseWithLayout("99/99/2026", "02/01/2006")
+	if errors.Is(err, quando.ErrInvalidFormat) {
+		fmt.Println("Invalid date format detected")
+	}
+	// Output: Invalid date format detected
+}
