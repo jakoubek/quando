@@ -17,13 +17,13 @@
 ## Installation
 
 ```bash
-go get code.beautifulmachines.dev/quando
+go get code.beautifulmachines.dev/jakoubek/quando
 ```
 
 ## Quick Start
 
 ```go
-import "code.beautifulmachines.dev/quando"
+import "code.beautifulmachines.dev/jakoubek/quando"
 
 // Get current date
 now := quando.Now()
@@ -117,7 +117,7 @@ date := clock.Now() // Always returns Feb 9, 2026
 
 ## Documentation
 
-Full documentation available at: [pkg.go.dev/code.beautifulmachines.dev/quando](https://pkg.go.dev/code.beautifulmachines.dev/quando)
+Full documentation available at: [pkg.go.dev/code.beautifulmachines.dev/jakoubek/quando](https://pkg.go.dev/code.beautifulmachines.dev/jakoubek/quando)
 
 ## License
 
