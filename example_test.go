@@ -73,3 +73,42 @@ func ExampleDate_immutability() {
 	// Modified: 2026-02-09 12:00:00
 	// Original unchanged: true
 }
+
+// ExampleNewClock demonstrates creating a default clock
+func ExampleNewClock() {
+	clock := quando.NewClock()
+	_ = clock.Now()
+	fmt.Println("Clock created")
+	// Output: Clock created
+}
+
+// ExampleNewFixedClock demonstrates creating a fixed clock for testing
+func ExampleNewFixedClock() {
+	// Create a fixed clock that always returns the same time
+	fixedTime := time.Date(2026, 2, 9, 12, 0, 0, 0, time.UTC)
+	clock := quando.NewFixedClock(fixedTime)
+
+	// Now() always returns the fixed time
+	date := clock.Now()
+	fmt.Println(date)
+	// Output: 2026-02-09 12:00:00
+}
+
+// ExampleFixedClock_deterministic demonstrates deterministic testing with FixedClock
+func ExampleFixedClock_deterministic() {
+	// In tests, use a fixed clock for deterministic behavior
+	testTime := time.Date(2026, 2, 9, 12, 0, 0, 0, time.UTC)
+	clock := quando.NewFixedClock(testTime)
+
+	// Call multiple times - always returns same time
+	date1 := clock.Now()
+	date2 := clock.Now()
+
+	fmt.Printf("Date 1: %v\n", date1)
+	fmt.Printf("Date 2: %v\n", date2)
+	fmt.Printf("Same: %v\n", date1.Unix() == date2.Unix())
+	// Output:
+	// Date 1: 2026-02-09 12:00:00
+	// Date 2: 2026-02-09 12:00:00
+	// Same: true
+}
