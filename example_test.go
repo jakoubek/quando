@@ -1,6 +1,7 @@
 package quando_test
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -276,4 +277,38 @@ func ExampleDuration_negative() {
 	// Output:
 	// Months: -12
 	// Years: -1
+}
+
+// ExampleErrInvalidFormat demonstrates handling invalid date formats
+func Example_errorHandling() {
+	// Note: Parse doesn't exist yet, so this is a conceptual example
+	// showing the error handling pattern that will be used
+
+	// Simulate an error by directly using the sentinel error
+	err := quando.ErrInvalidFormat
+
+	// Check for specific error type
+	if errors.Is(err, quando.ErrInvalidFormat) {
+		fmt.Println("Invalid format detected")
+	}
+
+	// Output: Invalid format detected
+}
+
+// Example_errorTypes demonstrates all error types
+func Example_errorTypes() {
+	// Show all defined error types
+	errors := []error{
+		quando.ErrInvalidFormat,
+		quando.ErrInvalidTimezone,
+		quando.ErrOverflow,
+	}
+
+	for _, err := range errors {
+		fmt.Println(err.Error())
+	}
+	// Output:
+	// invalid date format
+	// invalid timezone
+	// date overflow
 }
