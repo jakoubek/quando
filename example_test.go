@@ -312,3 +312,56 @@ func Example_errorTypes() {
 	// invalid timezone
 	// date overflow
 }
+
+// ExampleDate_Add demonstrates date arithmetic
+func ExampleDate_Add() {
+	date := quando.From(time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC))
+
+	fmt.Println("Original:", date)
+	fmt.Println("+1 day:", date.Add(1, quando.Days))
+	fmt.Println("+1 month:", date.Add(1, quando.Months))
+	fmt.Println("+1 year:", date.Add(1, quando.Years))
+	// Output:
+	// Original: 2026-01-15 12:00:00
+	// +1 day: 2026-01-16 12:00:00
+	// +1 month: 2026-02-15 12:00:00
+	// +1 year: 2027-01-15 12:00:00
+}
+
+// ExampleDate_Add_monthEndOverflow demonstrates month-end overflow behavior
+func ExampleDate_Add_monthEndOverflow() {
+	// When adding months, if target day doesn't exist, snap to month end
+	date := quando.From(time.Date(2026, 1, 31, 12, 0, 0, 0, time.UTC))
+
+	fmt.Println("Jan 31 + 1 month:", date.Add(1, quando.Months))
+	fmt.Println("Jan 31 + 2 months:", date.Add(2, quando.Months))
+	// Output:
+	// Jan 31 + 1 month: 2026-02-28 12:00:00
+	// Jan 31 + 2 months: 2026-03-31 12:00:00
+}
+
+// ExampleDate_Sub demonstrates date subtraction
+func ExampleDate_Sub() {
+	date := quando.From(time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC))
+
+	fmt.Println("Original:", date)
+	fmt.Println("-1 day:", date.Sub(1, quando.Days))
+	fmt.Println("-1 month:", date.Sub(1, quando.Months))
+	// Output:
+	// Original: 2026-03-31 12:00:00
+	// -1 day: 2026-03-30 12:00:00
+	// -1 month: 2026-02-28 12:00:00
+}
+
+// ExampleDate_Add_chaining demonstrates method chaining
+func ExampleDate_Add_chaining() {
+	date := quando.From(time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC))
+
+	result := date.
+		Add(1, quando.Months).
+		Add(15, quando.Days).
+		Sub(2, quando.Hours)
+
+	fmt.Println(result)
+	// Output: 2026-02-16 10:00:00
+}
