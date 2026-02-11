@@ -380,9 +380,9 @@ func ExampleParse() {
 // ExampleParse_formats demonstrates parsing various supported date formats
 func ExampleParse_formats() {
 	formats := []string{
-		"2026-02-09",  // ISO format (YYYY-MM-DD)
-		"2026/02/09",  // ISO with slash (YYYY/MM/DD)
-		"09.02.2026",  // EU format (DD.MM.YYYY)
+		"2026-02-09", // ISO format (YYYY-MM-DD)
+		"2026/02/09", // ISO with slash (YYYY/MM/DD)
+		"09.02.2026", // EU format (DD.MM.YYYY)
 	}
 
 	for _, f := range formats {
@@ -409,4 +409,52 @@ func ExampleParse_error() {
 		fmt.Println("Ambiguous format detected")
 	}
 	// Output: Ambiguous format detected
+}
+
+// ExampleDate_In demonstrates timezone conversion
+func ExampleDate_In() {
+	// Create a UTC time
+	utc := quando.From(time.Date(2026, 6, 15, 12, 0, 0, 0, time.UTC))
+
+	// Convert to Berlin timezone (UTC+2 in summer)
+	berlin, err := utc.In("Europe/Berlin")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	fmt.Printf("UTC:    %v\n", utc)
+	fmt.Printf("Berlin: %v\n", berlin)
+	// Output:
+	// UTC:    2026-06-15 12:00:00
+	// Berlin: 2026-06-15 14:00:00
+}
+
+// ExampleDate_In_dst demonstrates DST handling
+func ExampleDate_In_dst() {
+	// Winter: Europe/Berlin is UTC+1 (CET)
+	winter := quando.From(time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC))
+	berlin, _ := winter.In("Europe/Berlin")
+	fmt.Printf("Winter: UTC 12:00 -> Berlin %02d:00\n", berlin.Time().Hour())
+
+	// Summer: Europe/Berlin is UTC+2 (CEST)
+	summer := quando.From(time.Date(2026, 7, 15, 12, 0, 0, 0, time.UTC))
+	berlin, _ = summer.In("Europe/Berlin")
+	fmt.Printf("Summer: UTC 12:00 -> Berlin %02d:00\n", berlin.Time().Hour())
+
+	// Output:
+	// Winter: UTC 12:00 -> Berlin 13:00
+	// Summer: UTC 12:00 -> Berlin 14:00
+}
+
+// ExampleDate_In_error demonstrates error handling
+func ExampleDate_In_error() {
+	date := quando.Now()
+
+	_, err := date.In("Invalid/Timezone")
+	if errors.Is(err, quando.ErrInvalidTimezone) {
+		fmt.Println("Invalid timezone name")
+	}
+
+	// Output: Invalid timezone name
 }

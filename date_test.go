@@ -1,6 +1,7 @@
 package quando
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -306,5 +307,232 @@ func BenchmarkUnix(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = date.Unix()
+	}
+}
+
+func TestIn(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        time.Time
+		location     string
+		expectedZone string
+		expectedHour int
+	}{
+		{
+			name:         "UTC to Europe/Berlin (winter)",
+			input:        time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC),
+			location:     "Europe/Berlin",
+			expectedZone: "CET",
+			expectedHour: 13, // UTC+1 in winter
+		},
+		{
+			name:         "UTC to America/New_York (winter)",
+			input:        time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC),
+			location:     "America/New_York",
+			expectedZone: "EST",
+			expectedHour: 7, // UTC-5 in winter
+		},
+		{
+			name:         "UTC to Asia/Tokyo",
+			input:        time.Date(2026, 6, 15, 12, 0, 0, 0, time.UTC),
+			location:     "Asia/Tokyo",
+			expectedZone: "JST",
+			expectedHour: 21, // UTC+9 (no DST in Japan)
+		},
+		{
+			name:         "UTC to UTC (identity)",
+			input:        time.Date(2026, 6, 15, 12, 0, 0, 0, time.UTC),
+			location:     "UTC",
+			expectedZone: "UTC",
+			expectedHour: 12,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			date := From(tt.input)
+			result, err := date.In(tt.location)
+
+			if err != nil {
+				t.Fatalf("In(%q) unexpected error: %v", tt.location, err)
+			}
+
+			zone, _ := result.Time().Zone()
+			if zone != tt.expectedZone {
+				t.Errorf("In(%q) zone = %v, want %v", tt.location, zone, tt.expectedZone)
+			}
+
+			if result.Time().Hour() != tt.expectedHour {
+				t.Errorf("In(%q) hour = %v, want %v", tt.location, result.Time().Hour(), tt.expectedHour)
+			}
+		})
+	}
+}
+
+func TestInDST(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        time.Time
+		location     string
+		expectedZone string
+		expectedHour int
+	}{
+		{
+			name:         "UTC to Europe/Berlin (summer - DST)",
+			input:        time.Date(2026, 7, 15, 12, 0, 0, 0, time.UTC),
+			location:     "Europe/Berlin",
+			expectedZone: "CEST",
+			expectedHour: 14, // UTC+2 in summer
+		},
+		{
+			name:         "UTC to America/New_York (summer - DST)",
+			input:        time.Date(2026, 7, 15, 12, 0, 0, 0, time.UTC),
+			location:     "America/New_York",
+			expectedZone: "EDT",
+			expectedHour: 8, // UTC-4 in summer
+		},
+		// DST spring forward transition (Europe/Berlin: Mar 29, 2026)
+		{
+			name:         "Before DST spring forward",
+			input:        time.Date(2026, 3, 29, 0, 59, 0, 0, time.UTC),
+			location:     "Europe/Berlin",
+			expectedZone: "CET",
+			expectedHour: 1, // Still CET (UTC+1)
+		},
+		{
+			name:         "After DST spring forward",
+			input:        time.Date(2026, 3, 29, 1, 1, 0, 0, time.UTC),
+			location:     "Europe/Berlin",
+			expectedZone: "CEST",
+			expectedHour: 3, // Now CEST (UTC+2), skipped 2:00-3:00
+		},
+		// DST fall back transition (Europe/Berlin: Oct 25, 2026)
+		{
+			name:         "Before DST fall back",
+			input:        time.Date(2026, 10, 25, 0, 59, 0, 0, time.UTC),
+			location:     "Europe/Berlin",
+			expectedZone: "CEST",
+			expectedHour: 2, // Still CEST (UTC+2)
+		},
+		{
+			name:         "After DST fall back",
+			input:        time.Date(2026, 10, 25, 1, 1, 0, 0, time.UTC),
+			location:     "Europe/Berlin",
+			expectedZone: "CET",
+			expectedHour: 2, // Back to CET (UTC+1), repeated 2:00-3:00
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			date := From(tt.input)
+			result, err := date.In(tt.location)
+
+			if err != nil {
+				t.Fatalf("In(%q) unexpected error: %v", tt.location, err)
+			}
+
+			zone, _ := result.Time().Zone()
+			if zone != tt.expectedZone {
+				t.Errorf("In(%q) zone = %v, want %v", tt.location, zone, tt.expectedZone)
+			}
+
+			if result.Time().Hour() != tt.expectedHour {
+				t.Errorf("In(%q) hour = %v, want %v", tt.location, result.Time().Hour(), tt.expectedHour)
+			}
+		})
+	}
+}
+
+func TestInErrors(t *testing.T) {
+	date := Now()
+
+	tests := []struct {
+		name     string
+		location string
+		wantErr  error
+	}{
+		{"empty string", "", ErrInvalidTimezone},
+		{"invalid timezone", "Invalid/Timezone", ErrInvalidTimezone},
+		{"typo in timezone", "America/New_Yrok", ErrInvalidTimezone},
+		{"partial timezone", "Europe", ErrInvalidTimezone},
+		{"numeric timezone", "UTC+5", ErrInvalidTimezone}, // Use "America/Chicago" instead
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := date.In(tt.location)
+
+			if err == nil {
+				t.Fatalf("In(%q) expected error, got nil (result: %v)", tt.location, result)
+			}
+
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("In(%q) error = %v, want error wrapping %v", tt.location, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestInImmutability(t *testing.T) {
+	original := From(time.Date(2026, 6, 15, 12, 0, 0, 0, time.UTC))
+	originalTime := original.Time()
+
+	// Convert to different timezone
+	_, err := original.In("Europe/Berlin")
+	if err != nil {
+		t.Fatalf("In() failed: %v", err)
+	}
+
+	// Verify original is unchanged
+	if !original.Time().Equal(originalTime) {
+		t.Error("In() modified the original date")
+	}
+
+	// Verify original timezone is unchanged
+	originalZone, _ := original.Time().Zone()
+	if originalZone != "UTC" {
+		t.Errorf("Original zone changed to %v", originalZone)
+	}
+}
+
+func TestInLanguagePreservation(t *testing.T) {
+	date := From(time.Date(2026, 6, 15, 12, 0, 0, 0, time.UTC)).WithLang(DE)
+
+	result, err := date.In("Europe/Berlin")
+	if err != nil {
+		t.Fatalf("In() failed: %v", err)
+	}
+
+	if result.lang != DE {
+		t.Errorf("In() language = %v, want %v", result.lang, DE)
+	}
+}
+
+func TestDSTSafeArithmetic(t *testing.T) {
+	// Load Berlin timezone
+	loc, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		t.Skipf("Skipping DST test: %v", err)
+	}
+
+	// March 28, 2026 at 02:00 CET (day before DST spring forward)
+	date := From(time.Date(2026, 3, 28, 2, 0, 0, 0, loc))
+
+	// Add 1 day - should be March 29 at 02:00 CEST (not 03:00!)
+	// This is the critical DST behavior: same wall clock time, not 24 hours
+	next := date.Add(1, Days)
+
+	expected := time.Date(2026, 3, 29, 2, 0, 0, 0, loc)
+	if !next.Time().Equal(expected) {
+		t.Errorf("Add(1, Days) across DST = %v, want %v", next.Time(), expected)
+	}
+
+	// Verify it's actually only 23 hours in duration
+	duration := next.Time().Sub(date.Time())
+	expectedDuration := 23 * time.Hour
+	if duration != expectedDuration {
+		t.Logf("Actual duration: %v (expected: %v)", duration, expectedDuration)
+		t.Logf("This is correct: DST spring forward skips 1 hour")
 	}
 }

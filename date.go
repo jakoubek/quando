@@ -1,6 +1,7 @@
 package quando
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -99,6 +100,44 @@ func (d Date) WithLang(lang Lang) Date {
 		t:    d.t,
 		lang: lang,
 	}
+}
+
+// In converts the date to the specified IANA timezone.
+// Returns error for invalid timezone names. Never panics.
+//
+// The method uses the IANA Timezone Database (e.g., "America/New_York", "Europe/Berlin", "UTC").
+// Daylight Saving Time (DST) transitions are handled automatically by the timezone database.
+//
+// When combined with arithmetic operations, DST-safe behavior is preserved:
+// Add(1, Days) means "same wall clock time on next calendar day", not "24 hours later".
+//
+// Example:
+//
+//	utc := quando.From(time.Date(2026, 6, 15, 12, 0, 0, 0, time.UTC))
+//	berlin, err := utc.In("Europe/Berlin")
+//	// berlin is 2026-06-15 14:00:00 CEST (UTC+2 in summer)
+//
+// For a list of valid timezone names, see: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+func (d Date) In(location string) (Date, error) {
+	// Validate input
+	if location == "" {
+		return Date{}, fmt.Errorf("timezone location is empty: %w", ErrInvalidTimezone)
+	}
+
+	// Load timezone from IANA database
+	loc, err := time.LoadLocation(location)
+	if err != nil {
+		return Date{}, fmt.Errorf("loading timezone %q: %w", location, ErrInvalidTimezone)
+	}
+
+	// Convert time to new timezone
+	converted := d.t.In(loc)
+
+	// Return new Date with converted time, preserving language
+	return Date{
+		t:    converted,
+		lang: d.lang,
+	}, nil
 }
 
 // String returns the ISO 8601 representation of the date (YYYY-MM-DD HH:MM:SS).
