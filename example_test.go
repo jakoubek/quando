@@ -774,3 +774,145 @@ func ExampleDate_FormatLayout_comparison() {
 	// FormatLayout(ISO): 2026-02-09
 	// FormatLayout(custom style): Mon, Feb 9
 }
+
+// ExampleDate_WeekNumber demonstrates ISO 8601 week number calculation
+func ExampleDate_WeekNumber() {
+	date := quando.From(time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC))
+	fmt.Printf("Week number: %d\n", date.WeekNumber())
+	// Output: Week number: 7
+}
+
+// ExampleDate_WeekNumber_yearBoundary demonstrates week numbers at year boundaries
+func ExampleDate_WeekNumber_yearBoundary() {
+	// Jan 1, 2023 (Sunday) belongs to week 52 of 2022
+	jan1 := quando.From(time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC))
+	fmt.Printf("2023-01-01: Week %d\n", jan1.WeekNumber())
+
+	// Jan 2, 2023 (Monday) is week 1 of 2023
+	jan2 := quando.From(time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC))
+	fmt.Printf("2023-01-02: Week %d\n", jan2.WeekNumber())
+
+	// Dec 31, 2026 (Thursday) is week 53
+	dec31 := quando.From(time.Date(2026, 12, 31, 0, 0, 0, 0, time.UTC))
+	fmt.Printf("2026-12-31: Week %d\n", dec31.WeekNumber())
+	// Output:
+	// 2023-01-01: Week 52
+	// 2023-01-02: Week 1
+	// 2026-12-31: Week 53
+}
+
+// ExampleDate_Quarter demonstrates fiscal quarter calculation
+func ExampleDate_Quarter() {
+	q1 := quando.From(time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC))
+	q2 := quando.From(time.Date(2026, 5, 15, 0, 0, 0, 0, time.UTC))
+	q3 := quando.From(time.Date(2026, 8, 20, 0, 0, 0, 0, time.UTC))
+	q4 := quando.From(time.Date(2026, 11, 25, 0, 0, 0, 0, time.UTC))
+
+	fmt.Printf("February: Q%d\n", q1.Quarter())
+	fmt.Printf("May: Q%d\n", q2.Quarter())
+	fmt.Printf("August: Q%d\n", q3.Quarter())
+	fmt.Printf("November: Q%d\n", q4.Quarter())
+	// Output:
+	// February: Q1
+	// May: Q2
+	// August: Q3
+	// November: Q4
+}
+
+// ExampleDate_DayOfYear demonstrates day of year calculation
+func ExampleDate_DayOfYear() {
+	jan1 := quando.From(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC))
+	feb9 := quando.From(time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC))
+	dec31 := quando.From(time.Date(2026, 12, 31, 0, 0, 0, 0, time.UTC))
+
+	fmt.Printf("Jan 1: Day %d\n", jan1.DayOfYear())
+	fmt.Printf("Feb 9: Day %d\n", feb9.DayOfYear())
+	fmt.Printf("Dec 31: Day %d\n", dec31.DayOfYear())
+	// Output:
+	// Jan 1: Day 1
+	// Feb 9: Day 40
+	// Dec 31: Day 365
+}
+
+// ExampleDate_DayOfYear_leapYear demonstrates day of year in a leap year
+func ExampleDate_DayOfYear_leapYear() {
+	// 2024 is a leap year
+	feb29 := quando.From(time.Date(2024, 2, 29, 0, 0, 0, 0, time.UTC))
+	dec31 := quando.From(time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC))
+
+	fmt.Printf("Feb 29 (leap year): Day %d\n", feb29.DayOfYear())
+	fmt.Printf("Dec 31 (leap year): Day %d\n", dec31.DayOfYear())
+	// Output:
+	// Feb 29 (leap year): Day 60
+	// Dec 31 (leap year): Day 366
+}
+
+// ExampleDate_IsWeekend demonstrates weekend detection
+func ExampleDate_IsWeekend() {
+	monday := quando.From(time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC))   // Monday
+	saturday := quando.From(time.Date(2026, 2, 14, 0, 0, 0, 0, time.UTC)) // Saturday
+	sunday := quando.From(time.Date(2026, 2, 15, 0, 0, 0, 0, time.UTC))   // Sunday
+
+	fmt.Printf("Monday: %v\n", monday.IsWeekend())
+	fmt.Printf("Saturday: %v\n", saturday.IsWeekend())
+	fmt.Printf("Sunday: %v\n", sunday.IsWeekend())
+	// Output:
+	// Monday: false
+	// Saturday: true
+	// Sunday: true
+}
+
+// ExampleDate_IsLeapYear demonstrates leap year detection
+func ExampleDate_IsLeapYear() {
+	year2024 := quando.From(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)) // Leap year
+	year2026 := quando.From(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)) // Not leap year
+	year2000 := quando.From(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)) // Leap year (400 rule)
+	year1900 := quando.From(time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)) // Not leap year (100 rule)
+
+	fmt.Printf("2024: %v\n", year2024.IsLeapYear())
+	fmt.Printf("2026: %v\n", year2026.IsLeapYear())
+	fmt.Printf("2000: %v\n", year2000.IsLeapYear())
+	fmt.Printf("1900: %v\n", year1900.IsLeapYear())
+	// Output:
+	// 2024: true
+	// 2026: false
+	// 2000: true
+	// 1900: false
+}
+
+// ExampleDate_Info demonstrates aggregated date metadata
+func ExampleDate_Info() {
+	date := quando.From(time.Date(2026, 2, 9, 12, 30, 45, 0, time.UTC))
+	info := date.Info()
+
+	fmt.Printf("Week number: %d\n", info.WeekNumber)
+	fmt.Printf("Quarter: %d\n", info.Quarter)
+	fmt.Printf("Day of year: %d\n", info.DayOfYear)
+	fmt.Printf("Is weekend: %v\n", info.IsWeekend)
+	fmt.Printf("Is leap year: %v\n", info.IsLeapYear)
+	// Output:
+	// Week number: 7
+	// Quarter: 1
+	// Day of year: 40
+	// Is weekend: false
+	// Is leap year: false
+}
+
+// ExampleDate_Info_leapYear demonstrates Info() for a leap year date
+func ExampleDate_Info_leapYear() {
+	// Saturday, Feb 29, 2024 (leap year)
+	date := quando.From(time.Date(2024, 2, 29, 0, 0, 0, 0, time.UTC))
+	info := date.Info()
+
+	fmt.Printf("Week number: %d\n", info.WeekNumber)
+	fmt.Printf("Quarter: %d\n", info.Quarter)
+	fmt.Printf("Day of year: %d\n", info.DayOfYear)
+	fmt.Printf("Is weekend: %v\n", info.IsWeekend)
+	fmt.Printf("Is leap year: %v\n", info.IsLeapYear)
+	// Output:
+	// Week number: 9
+	// Quarter: 1
+	// Day of year: 60
+	// Is weekend: false
+	// Is leap year: true
+}
