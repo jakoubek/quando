@@ -1,5 +1,12 @@
 # quando
 
+[![Mirror on GitHub](https://img.shields.io/badge/mirror-GitHub-blue)](https://github.com/jakoubek/quando)
+[![Go Reference](https://pkg.go.dev/badge/code.beautifulmachines.dev/jakoubek/quando.svg)](https://pkg.go.dev/code.beautifulmachines.dev/jakoubek/quando)
+[![Go Report Card](https://goreportcard.com/badge/code.beautifulmachines.dev/jakoubek/quando)](https://goreportcard.com/report/code.beautifulmachines.dev/jakoubek/quando)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+> **Primary repository:** [code.beautifulmachines.dev/jakoubek/quando](https://code.beautifulmachines.dev/jakoubek/quando) · GitHub is a read-only mirror.
+
 > Intuitive and idiomatic date calculations for Go
 
 **quando** is a standalone Go library for complex date operations that are cumbersome or impossible with the Go standard library alone. It provides a fluent API for date arithmetic, parsing, formatting, and timezone-aware calculations.
