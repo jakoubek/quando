@@ -7,9 +7,8 @@ import (
 
 // Lang represents a language for internationalization (i18n) in formatting.
 //
-// Phase 1 supports English (EN) and German (DE). Future phases will expand to
-// include 21 additional languages: FR, ES, IT, PT, NL, PL, RU, JA, ZH, KO, AR,
-// HI, TR, SV, NO, DA, FI, CS, HU, RO, UK, EL.
+// Currently supports 17 languages: EN, DE, ES, FR, IT, PT, NL, PL, RU, TR, VI,
+// JA, KO, ZhCN, ZhTW, HI, TH.
 //
 // Language affects:
 //   - Format(Long): month and weekday names
@@ -28,6 +27,36 @@ const (
 	EN Lang = "en"
 	// DE represents German (Deutsch) language.
 	DE Lang = "de"
+	// ES represents Spanish (Español) language.
+	ES Lang = "es"
+	// FR represents French (Français) language.
+	FR Lang = "fr"
+	// IT represents Italian (Italiano) language.
+	IT Lang = "it"
+	// PT represents Portuguese (Português) language.
+	PT Lang = "pt"
+	// NL represents Dutch (Nederlands) language.
+	NL Lang = "nl"
+	// PL represents Polish (Polski) language.
+	PL Lang = "pl"
+	// RU represents Russian (Русский) language.
+	RU Lang = "ru"
+	// TR represents Turkish (Türkçe) language.
+	TR Lang = "tr"
+	// VI represents Vietnamese (Tiếng Việt) language.
+	VI Lang = "vi"
+	// JA represents Japanese (日本語) language.
+	JA Lang = "ja"
+	// KO represents Korean (한국어) language.
+	KO Lang = "ko"
+	// ZhCN represents Chinese Simplified (简体中文) language.
+	ZhCN Lang = "zh-cn"
+	// ZhTW represents Chinese Traditional (繁體中文) language.
+	ZhTW Lang = "zh-tw"
+	// HI represents Hindi (हिन्दी) language.
+	HI Lang = "hi"
+	// TH represents Thai (ไทย) language.
+	TH Lang = "th"
 )
 
 // Date wraps time.Time and provides a fluent API for date operations.
