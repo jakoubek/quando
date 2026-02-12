@@ -51,12 +51,15 @@ prevMonday := quando.Now().Prev(time.Monday)
 start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 end := time.Date(2028, 3, 15, 0, 0, 0, 0, time.UTC)
 duration := quando.Diff(start, end)
-fmt.Println(duration.Human()) // "2 years, 2 months, 14 days"
+fmt.Println(duration.Human()) // "2 years, 2 months"
 
 // Parsing (automatic format detection)
 date, err := quando.Parse("2026-02-09")
-date, err := quando.Parse("09.02.2026")       // EU format
-date, err := quando.Parse("3 days ago")       // Relative
+date, err := quando.Parse("09.02.2026")           // EU format
+
+// Relative dates
+date, err := quando.ParseRelative("+3 days")      // 3 days from now
+date, err = quando.ParseRelative("-1 week")        // 1 week ago
 
 // Formatting
 date.Format(quando.ISO)      // "2026-02-09"
@@ -176,7 +179,7 @@ duration := end.Sub(start)
 
 // quando: Built-in human formatting
 duration := quando.Diff(start, end)
-fmt.Println(duration.Human()) // "2 years, 2 months, 14 days" ✅
+fmt.Println(duration.Human()) // "2 years, 2 months" ✅
 ```
 
 #### Start of Week (Monday)
