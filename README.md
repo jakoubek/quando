@@ -13,7 +13,7 @@
 
 ## Features
 
-- **Fluent API**: Chain operations naturally: `quando.Now().Add(2, Months).StartOf(Week)`
+- **Fluent API**: Chain operations naturally: `quando.Now().Add(2, quando.Months).StartOf(quando.Weeks)`
 - **Month-End Aware**: Handles edge cases like `Jan 31 + 1 month = Feb 28`
 - **DST Safe**: Calendar-based arithmetic (not clock-based)
 - **Zero Dependencies**: Only Go stdlib
@@ -40,8 +40,8 @@ date := quando.From(time.Date(2026, 1, 31, 0, 0, 0, 0, time.UTC))
 result := date.Add(1, quando.Months) // Feb 28, 2026 (not overflow)
 
 // Snap to boundaries
-monday := quando.Now().StartOf(quando.Week)     // This week's Monday 00:00
-endOfMonth := quando.Now().EndOf(quando.Month)  // Last day of month 23:59:59
+monday := quando.Now().StartOf(quando.Weeks)     // This week's Monday 00:00
+endOfMonth := quando.Now().EndOf(quando.Months)  // Last day of month 23:59:59
 
 // Next/Previous dates
 nextFriday := quando.Now().Next(time.Friday)
@@ -75,8 +75,8 @@ dayOfYear := date.DayOfYear()   // 1-366
 // Complex chaining for real-world scenarios
 reportDeadline := quando.Now().
     Add(1, quando.Quarters).     // Next quarter
-    EndOf(quando.Quarter).       // Last day of that quarter
-    StartOf(quando.Week).        // Monday of that week
+    EndOf(quando.Quarters).      // Last day of that quarter
+    StartOf(quando.Weeks).       // Monday of that week
     Add(-1, quando.Weeks)        // One week before
 
 // Multilingual formatting
@@ -194,7 +194,7 @@ startOfWeek = time.Date(startOfWeek.Year(), startOfWeek.Month(),
     startOfWeek.Day(), 0, 0, 0, 0, startOfWeek.Location())
 
 // quando: One method call
-startOfWeek := quando.Now().StartOf(quando.Week)
+startOfWeek := quando.Now().StartOf(quando.Weeks)
 ```
 
 ### Feature Comparison
