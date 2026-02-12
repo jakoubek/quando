@@ -7,13 +7,18 @@ import (
 )
 
 func TestNow(t *testing.T) {
-	before := time.Now()
+	before := time.Now().UTC()
 	date := Now()
-	after := time.Now()
+	after := time.Now().UTC()
 
 	// Verify that Now() returns a time between before and after
 	if date.Time().Before(before) || date.Time().After(after) {
 		t.Errorf("Now() returned time outside expected range")
+	}
+
+	// Verify location is UTC
+	if date.Time().Location() != time.UTC {
+		t.Errorf("Now().Time().Location() = %v, want UTC", date.Time().Location())
 	}
 
 	// Verify default language is EN

@@ -21,13 +21,18 @@ func TestNewClock(t *testing.T) {
 func TestDefaultClock_Now(t *testing.T) {
 	clock := NewClock()
 
-	before := time.Now()
+	before := time.Now().UTC()
 	date := clock.Now()
-	after := time.Now()
+	after := time.Now().UTC()
 
 	// Verify that Now() returns a time between before and after
 	if date.Time().Before(before) || date.Time().After(after) {
 		t.Errorf("DefaultClock.Now() returned time outside expected range")
+	}
+
+	// Verify location is UTC
+	if date.Time().Location() != time.UTC {
+		t.Errorf("DefaultClock.Now().Time().Location() = %v, want UTC", date.Time().Location())
 	}
 }
 

@@ -738,8 +738,7 @@ func TestParseRelativeErrors(t *testing.T) {
 }
 
 func TestParseRelative(t *testing.T) {
-	// Test the production function (uses system clock)
-	// Just verify it doesn't error on valid inputs
+	// Test the production function (uses system clock with UTC)
 	validInputs := []string{
 		"today",
 		"tomorrow",
@@ -751,12 +750,38 @@ func TestParseRelative(t *testing.T) {
 
 	for _, input := range validInputs {
 		t.Run(input, func(t *testing.T) {
-			_, err := ParseRelative(input)
+			result, err := ParseRelative(input)
 			if err != nil {
 				t.Errorf("ParseRelative(%q) unexpected error: %v", input, err)
 			}
+
+			// Verify result is in UTC timezone
+			if result.Time().Location() != time.UTC {
+				t.Errorf("ParseRelative(%q) location = %v, want UTC", input, result.Time().Location())
+			}
 		})
 	}
+
+	// Specifically test "today" to verify UTC behavior
+	t.Run("today returns UTC date", func(t *testing.T) {
+		now := time.Now().UTC()
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+
+		result, err := ParseRelative("today")
+		if err != nil {
+			t.Fatalf("ParseRelative(\"today\") error: %v", err)
+		}
+
+		// Expect UTC location
+		if result.Time().Location() != time.UTC {
+			t.Errorf("ParseRelative(\"today\").Location() = %v, want UTC", result.Time().Location())
+		}
+
+		// Verify it matches expected date
+		if !result.Time().Equal(today) {
+			t.Errorf("ParseRelative(\"today\") = %v, want %v", result.Time(), today)
+		}
+	})
 }
 
 func TestParseRelativeImmutability(t *testing.T) {

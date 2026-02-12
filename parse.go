@@ -294,7 +294,7 @@ func ParseRelativeWithClock(s string, clock Clock) (Date, error) {
 		return Date{}, fmt.Errorf("parsing relative date: empty input: %w", ErrInvalidFormat)
 	}
 
-	// Get base date (today at 00:00:00 in local timezone)
+	// Get base date (today at 00:00:00 in UTC timezone)
 	now := clock.Now()
 	t := now.Time()
 	loc := t.Location()

@@ -70,14 +70,14 @@ type Date struct {
 }
 
 // Now returns a Date representing the current moment in time.
-// The Date uses the local timezone by default.
+// The Date uses the UTC timezone by default.
 //
 // Example:
 //
 //	now := quando.Now()
 func Now() Date {
 	return Date{
-		t:    time.Now(),
+		t:    time.Now().UTC(),
 		lang: EN, // Default language
 	}
 }
